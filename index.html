@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aczel的学习日记</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">Aczel的学习日记</h1>
+        <p class="sidebar-subtitle">六级 · 雅思 · 词汇积累</p>
+        <button class="theme-toggle" id="theme-toggle-desktop" aria-label="切换主题">
+          <span class="theme-icon-light">☀️</span>
+          <span class="theme-icon-dark">🌙</span>
+        </button>
+      </div>
+
+      <!-- Pack Selector -->
+      <div class="sidebar-section">
+        <p class="sidebar-label">词汇包</p>
+        <button class="pack-btn active" data-pack="cet6">
+          <span class="pack-icon">📘</span> 六级词汇 CET-6
+        </button>
+        <button class="pack-btn" data-pack="ielts">
+          <span class="pack-icon">📙</span> 雅思词汇 IELTS
+        </button>
+      </div>
+
+      <!-- Category Directory -->
+      <div class="sidebar-section">
+        <p class="sidebar-label">学习场景</p>
+        <button class="cat-btn active" data-cat="all">
+          <span class="cat-icon">📋</span> 全部词汇
+          <span class="cat-count" id="cat-count-all">0</span>
+        </button>
+        <nav class="cat-list" id="cat-list"></nav>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-area">
+      <!-- Mobile header -->
+      <header class="header mobile-only">
+        <h1 class="logo">Aczel的学习日记</h1>
+        <button class="menu-toggle" id="menu-toggle" aria-label="打开菜单">
+          <span></span><span></span><span></span>
+        </button>
+      </header>
+
+      <!-- Mobile pack tabs -->
+      <nav class="pack-selector mobile-only">
+        <button class="pack-btn active" data-pack="cet6">
+          <span class="pack-icon">📘</span><span>六级</span>
+        </button>
+        <button class="pack-btn" data-pack="ielts">
+          <span class="pack-icon">📙</span><span>雅思</span>
+        </button>
+      </nav>
+
+      <!-- Mobile category scroll -->
+      <nav class="cat-scroll mobile-only" id="cat-scroll"></nav>
+
+      <!-- Mode Selector -->
+      <nav class="mode-selector">
+        <button class="mode-btn active" data-mode="learn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+          学习
+        </button>
+        <button class="mode-btn" data-mode="meaning">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+          看词选义
+        </button>
+        <button class="mode-btn" data-mode="word">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+          看义选词
+        </button>
+        <button class="mode-btn" data-mode="spell">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          拼写
+        </button>
+      </nav>
+
+      <!-- Category indicator -->
+      <div class="cat-indicator" id="cat-indicator">
+        <span class="cat-indicator-text">📋 当前场景：<strong>全部词汇</strong></span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-area">
+        <div class="progress-info">
+          <span>已掌握: <strong id="mastered-count">0</strong> / <strong id="total-count">0</strong></span>
+          <span>正确率: <strong id="accuracy">—</strong></span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="progress-info" style="margin-top:6px">
+          <span style="font-size:0.78rem;color:var(--text-muted)">当前词库: <strong id="current-pool-count">0</strong> 词</span>
+        </div>
+      </div>
+
+      <!-- Learn Mode -->
+      <main class="main-content" id="learn-mode">
+        <div class="word-card">
+          <div class="card-inner" id="card-inner">
+            <div class="card-front">
+              <h2 class="word-text" id="word-text">—</h2>
+              <p class="phonetic-text" id="phonetic-text"></p>
+              <button class="flip-btn" id="flip-btn">查看释义 →</button>
+            </div>
+            <div class="card-back">
+              <p class="meaning-text" id="meaning-text"></p>
+              <div class="example-box">
+                <p class="example-en" id="example-en"></p>
+                <p class="example-zh" id="example-zh"></p>
+              </div>
+              <button class="flip-btn" id="flip-back-btn">← 返回</button>
+            </div>
+          </div>
+        </div>
+        <div class="learn-actions">
+          <button class="action-btn known-btn" id="known-btn">✓ 已掌握</button>
+          <button class="action-btn review-btn" id="review-btn">↻ 待复习</button>
+          <button class="action-btn skip-btn" id="skip-btn">→ 下一个</button>
+        </div>
+      </main>
+
+      <!-- Quiz Mode -->
+      <main class="main-content hidden" id="quiz-mode">
+        <div class="quiz-card">
+          <p class="quiz-prompt" id="quiz-prompt"></p>
+          <h3 class="quiz-question" id="quiz-question"></h3>
+          <div class="quiz-options" id="quiz-options"></div>
+          <p class="quiz-feedback" id="quiz-feedback"></p>
+          <button class="quiz-next-btn hidden" id="quiz-next-btn">继续 →</button>
+        </div>
+        <div class="quiz-stats">
+          <span id="quiz-score">得分: 0</span>
+          <span id="quiz-progress">进度: 0/0</span>
+        </div>
+      </main>
+
+      <!-- Spell Mode -->
+      <main class="main-content hidden" id="spell-mode">
+        <div class="spell-card">
+          <p class="spell-prompt">请输入对应的英文单词：</p>
+          <h3 class="spell-meaning" id="spell-meaning"></h3>
+          <p class="spell-phonetic" id="spell-phonetic"></p>
+          <div class="spell-input-area">
+            <input type="text" class="spell-input" id="spell-input" placeholder="输入英文单词..." autocomplete="off">
+            <button class="spell-submit-btn" id="spell-submit-btn">确认</button>
+          </div>
+          <p class="spell-feedback" id="spell-feedback"></p>
+          <button class="quiz-next-btn hidden" id="spell-next-btn">继续 →</button>
+        </div>
+      </main>
+
+      <button class="theme-toggle mobile-only" id="theme-toggle-mobile" aria-label="切换主题">
+        <span class="theme-icon-light">☀️</span>
+        <span class="theme-icon-dark">🌙</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Overlay for mobile sidebar -->
+  <div class="overlay hidden" id="overlay"></div>
+
+  <script src="data/cet6.js"></script>
+  <script src="data/ielts.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
