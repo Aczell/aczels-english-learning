@@ -9,14 +9,24 @@ function shuffle(arr) {
   }
 }
 
+/* ========== 掌握度等级 ========== */
+const MASTERY = [
+  { level: 0, label: '未学习',   icon: '○', color: 'var(--text-muted)' },
+  { level: 1, label: '初识',     icon: '🌱', color: 'var(--dusty-rose)' },
+  { level: 2, label: '了解',     icon: '🌿', color: 'var(--sage-light)' },
+  { level: 3, label: '掌握',     icon: '🌳', color: 'var(--sage-dark)' },
+  { level: 4, label: '熟练',     icon: '⭐', color: 'var(--warm-gold)' },
+];
+
 /* ========== 全局状态 ========== */
 const state = {
   currentPack: 'cet6',
   currentCat: 'all',
   currentMode: 'learn',
   currentIndex: 0,
-  wordPool: [],       // 当前类别下的所有词汇
-  mastered: {},
+  wordPool: [],
+  mastery: {},       // { "pack|word": 0-4 }
+  notes: {},         // { "pack|word": "reflection text" }
   quizScore: 0,
   quizIndex: 0,
   quizWords: [],
@@ -34,7 +44,9 @@ function getCatInfo(catKey) {
 
 function getAllCategories() {
   const data = getData();
-  return Object.keys(data).map(k => ({ key: k, name: data[k].name, icon: data[k].icon, count: data[k].words.length }));
+  return Object.keys(data).map(k => ({
+    key: k, name: data[k].name, icon: data[k].icon, count: data[k].words.length
+  }));
 }
 
 function buildWordPool() {
@@ -46,7 +58,9 @@ function buildWordPool() {
     });
     return words;
   }
-  return data[state.currentCat].words.map(w => ({ ...w, category: state.currentCat, categoryName: data[state.currentCat].name }));
+  return data[state.currentCat].words.map(w => ({
+    ...w, category: state.currentCat, categoryName: data[state.currentCat].name
+  }));
 }
 
 function refreshPool() {
@@ -62,15 +76,25 @@ function mkKey(word) {
 }
 
 function saveProgress() {
-  localStorage.setItem('englearn_mastered', JSON.stringify(state.mastered));
+  localStorage.setItem('englearn_mastery', JSON.stringify(state.mastery));
+  localStorage.setItem('englearn_notes', JSON.stringify(state.notes));
   localStorage.setItem('englearn_pack', state.currentPack);
   localStorage.setItem('englearn_cat', state.currentCat);
 }
 
 function loadProgress() {
   try {
-    const m = JSON.parse(localStorage.getItem('englearn_mastered'));
-    if (m) state.mastered = m;
+    const m = JSON.parse(localStorage.getItem('englearn_mastery'));
+    if (m) state.mastery = m;
+    const n = JSON.parse(localStorage.getItem('englearn_notes'));
+    if (n) state.notes = n;
+    // Migrate old boolean-format data
+    const oldMastered = JSON.parse(localStorage.getItem('englearn_mastered'));
+    if (oldMastered && !localStorage.getItem('englearn_mastery')) {
+      Object.keys(oldMastered).forEach(k => {
+        if (oldMastered[k] === true) state.mastery[k] = 3;
+      });
+    }
     const p = localStorage.getItem('englearn_pack');
     if (p && (p === 'cet6' || p === 'ielts')) state.currentPack = p;
     const c = localStorage.getItem('englearn_cat');
@@ -78,16 +102,43 @@ function loadProgress() {
   } catch (e) { /* ignore */ }
 }
 
-function isMastered(word) { return !!state.mastered[mkKey(word)]; }
-function setMastered(word, val) { state.mastered[mkKey(word)] = val; saveProgress(); updateProgress(); }
+function getMasteryLevel(word) {
+  return state.mastery[mkKey(word)] || 0;
+}
+
+function setMasteryLevel(word, level) {
+  state.mastery[mkKey(word)] = level;
+  saveProgress();
+  updateProgress();
+  updateMasteryUI();
+  updateLevelBtns();
+}
+
+function getNote(word) {
+  return state.notes[mkKey(word)] || '';
+}
+
+function setNote(word, text) {
+  if (text.trim()) {
+    state.notes[mkKey(word)] = text;
+  } else {
+    delete state.notes[mkKey(word)];
+  }
+  saveProgress();
+}
 
 /* ========== 进度更新 ========== */
 function updateProgress() {
   const pool = state.wordPool;
-  const masteredCount = pool.filter(w => isMastered(w.w)).length;
+  // 加权计数: 等级 1=0.25, 2=0.5, 3=0.75, 4=1.0
+  const weightedSum = pool.reduce((s, w) => {
+    const lv = getMasteryLevel(w.w);
+    return s + (lv === 0 ? 0 : lv === 1 ? 0.25 : lv === 2 ? 0.5 : lv === 3 ? 0.75 : 1);
+  }, 0);
+  const masteredCount = pool.filter(w => getMasteryLevel(w.w) >= 3).length;
   $('#mastered-count').textContent = masteredCount;
   $('#total-count').textContent = pool.length;
-  $('#progress-fill').style.width = pool.length ? (masteredCount / pool.length * 100) + '%' : '0%';
+  $('#progress-fill').style.width = pool.length ? (weightedSum / pool.length * 100) + '%' : '0%';
 
   const stored = JSON.parse(localStorage.getItem('englearn_quiz_stats') || '{}');
   const key = state.currentPack + '_' + state.currentCat;
@@ -99,13 +150,44 @@ function updateProgress() {
   }
 }
 
+/* ========== 掌握度 UI ========== */
+function updateMasteryUI() {
+  if (state.currentMode !== 'learn' || state.wordPool.length === 0) return;
+  const w = state.wordPool[state.currentIndex];
+  if (!w) return;
+  const lv = getMasteryLevel(w.w);
+  const info = MASTERY[lv];
+
+  // Dots
+  $$('.mastery-dot').forEach(dot => {
+    const dotLv = parseInt(dot.dataset.lv);
+    dot.className = 'mastery-dot';
+    if (dotLv <= lv) dot.classList.add('lv' + dotLv);
+  });
+
+  // Label
+  $('#mastery-label').textContent = info.label;
+  $('#mastery-label').style.color = info.color;
+}
+
+function updateLevelBtns() {
+  if (state.currentMode !== 'learn' || state.wordPool.length === 0) return;
+  const w = state.wordPool[state.currentIndex];
+  if (!w) return;
+  const lv = getMasteryLevel(w.w);
+
+  $$('.level-btn').forEach(btn => {
+    const btnLv = parseInt(btn.dataset.level);
+    btn.classList.toggle('active', btnLv === lv);
+  });
+}
+
 /* ========== 场景目录渲染 ========== */
 function renderCategoryDirectory() {
   const cats = getAllCategories();
   const totalAll = cats.reduce((s, c) => s + c.count, 0);
   $('#cat-count-all').textContent = totalAll;
 
-  // Sidebar category list
   const sidebarList = $('#cat-list');
   sidebarList.innerHTML = cats.map(c => `
     <button class="cat-btn-sidebar" data-cat="${c.key}">
@@ -114,37 +196,29 @@ function renderCategoryDirectory() {
     </button>
   `).join('');
 
-  // Mobile category scroll
   const mobileScroll = $('#cat-scroll');
   let html = `<button class="cat-chip active" data-cat="all">📋 全部</button>`;
   html += cats.map(c => `<button class="cat-chip" data-cat="${c.key}">${c.icon} ${c.name}</button>`).join('');
   mobileScroll.innerHTML = html;
 
-  // Highlight active category
   updateCategoryActive();
 }
 
 function updateCategoryActive() {
-  // Sidebar
   $$('.cat-btn-sidebar').forEach(b => b.classList.toggle('active', b.dataset.cat === state.currentCat));
   $('#sidebar .cat-btn[data-cat="all"]')?.classList.toggle('active', state.currentCat === 'all');
-  // The top-level "all" button
-  const allBtns = $$('.cat-btn');
-  allBtns.forEach(b => {
+  $$('.cat-btn').forEach(b => {
     if (b.dataset.cat === 'all') b.classList.toggle('active', state.currentCat === 'all');
   });
-
-  // Mobile chips
   $$('.cat-chip').forEach(b => b.classList.toggle('active', b.dataset.cat === state.currentCat));
 
-  // Category indicator text
   const catInfo = state.currentCat === 'all' ? { name: '全部词汇', icon: '📋' } : getCatInfo(state.currentCat);
   if (catInfo) {
     $('#cat-indicator').innerHTML = `<span class="cat-indicator-text">${catInfo.icon} 当前场景：<strong>${catInfo.name}</strong></span>`;
   }
 }
 
-/* ========== 场景切换 ========== */
+/* ========== 切换逻辑 ========== */
 function switchCategory(cat) {
   state.currentCat = cat;
   saveProgress();
@@ -154,7 +228,6 @@ function switchCategory(cat) {
   resetCurrentMode();
 }
 
-/* ========== 词汇包切换 ========== */
 function switchPack(pack) {
   if (state.currentPack === pack) return;
   state.currentPack = pack;
@@ -165,15 +238,10 @@ function switchPack(pack) {
   refreshPool();
   updateProgress();
   resetCurrentMode();
-
-  // Update pack buttons
   $$('.pack-btn').forEach(b => b.classList.toggle('active', b.dataset.pack === pack));
 }
 
-/* ========== 模式切换 ========== */
-function resetCurrentMode() {
-  switchMode(state.currentMode);
-}
+function resetCurrentMode() { switchMode(state.currentMode); }
 
 function switchMode(mode) {
   state.currentMode = mode;
@@ -188,24 +256,18 @@ function switchMode(mode) {
 
   if (mode === 'learn') {
     $('#learn-mode').classList.remove('hidden');
-    if (state.wordPool.length === 0) { showEmpty(); return; }
+    if (state.wordPool.length === 0) return;
     renderLearnMode();
   } else if (mode === 'meaning' || mode === 'word') {
     $('#quiz-mode').classList.remove('hidden');
-    if (state.wordPool.length < 4) { showEmpty(); return; }
+    if (state.wordPool.length < 4) return;
     prepareQuizWords();
     renderQuiz();
   } else if (mode === 'spell') {
     $('#spell-mode').classList.remove('hidden');
-    if (state.wordPool.length === 0) { showEmpty(); return; }
+    if (state.wordPool.length === 0) return;
     renderSpell();
   }
-}
-
-function showEmpty() {
-  const msg = state.currentCat === 'all' ? '词汇数据加载中，请切换词汇包试试' : '该场景暂无词汇，请选择其他场景';
-  $('#word-text').textContent = '—';
-  $('#word-text').parentElement.querySelector('.empty-state')?.remove();
 }
 
 /* ========== 学习模式 ========== */
@@ -224,20 +286,33 @@ function renderLearnMode() {
   $('#example-zh').textContent = w.ez;
   $('#card-inner').classList.remove('flipped');
 
-  const knownBtn = $('#known-btn');
-  if (isMastered(w.w)) {
-    knownBtn.textContent = '✓ 已掌握 ✓';
-    knownBtn.style.opacity = '0.55';
-  } else {
-    knownBtn.textContent = '✓ 已掌握';
-    knownBtn.style.opacity = '1';
-  }
+  // 反思笔记
+  $('#notes-input').value = getNote(w.w);
+
+  // 掌握度指示器
+  updateMasteryUI();
+  updateLevelBtns();
 }
 
 function flipCard() { $('#card-inner').classList.toggle('flipped'); }
 
+function prevWord() {
+  if (state.wordPool.length === 0) return;
+  const w = state.wordPool[state.currentIndex];
+  if (w) setNote(w.w, $('#notes-input').value);
+
+  state.currentIndex--;
+  if (state.currentIndex < 0) {
+    state.currentIndex = state.wordPool.length - 1;
+  }
+  renderLearnMode();
+}
+
 function nextWord() {
   if (state.wordPool.length === 0) return;
+  const w = state.wordPool[state.currentIndex];
+  if (w) setNote(w.w, $('#notes-input').value);
+
   state.currentIndex++;
   if (state.currentIndex >= state.wordPool.length) {
     shuffle(state.wordPool);
@@ -254,7 +329,7 @@ function prepareQuizWords() {
   state.quizScore = 0;
 }
 
-function getOptions(correctWord, type) {
+function getOptions(correctWord) {
   const pool = state.wordPool;
   const options = [correctWord];
   while (options.length < 4 && options.length < pool.length) {
@@ -278,7 +353,7 @@ function renderQuiz() {
   $('#quiz-feedback').className = 'quiz-feedback';
   $('#quiz-next-btn').classList.add('hidden');
 
-  const options = getOptions(w, isMeaningMode ? 'meaning' : 'word');
+  const options = getOptions(w);
   const container = $('#quiz-options');
   container.innerHTML = '';
 
@@ -306,6 +381,9 @@ function handleQuizAnswer(selected, correct, clickedBtn) {
     $('#quiz-feedback').textContent = '✓ 正确！';
     $('#quiz-feedback').className = 'quiz-feedback correct';
     state.quizScore++;
+    // 答对自动提升掌握度
+    const currentLv = getMasteryLevel(correct.w);
+    if (currentLv < 4) setMasteryLevel(correct.w, currentLv + 1);
   } else {
     clickedBtn.classList.add('wrong');
     const correctLabel = isMeaningMode ? correct.m : correct.w;
@@ -373,6 +451,8 @@ function handleSpellSubmit() {
     $('#spell-feedback').textContent = '✓ 拼写正确！';
     $('#spell-feedback').className = 'spell-feedback correct';
     state.quizScore++;
+    const currentLv = getMasteryLevel(w.w);
+    if (currentLv < 4) setMasteryLevel(w.w, currentLv + 1);
   } else {
     $('#spell-feedback').textContent = `✗ 正确答案是：${w.w}`;
     $('#spell-feedback').className = 'spell-feedback wrong';
@@ -407,7 +487,7 @@ function nextSpell() {
   renderSpell();
 }
 
-/* ========== 测验统计存储 ========== */
+/* ========== 测验统计 ========== */
 function saveQuizStats(isCorrect) {
   const key = state.currentPack + '_' + state.currentCat;
   const stored = JSON.parse(localStorage.getItem('englearn_quiz_stats') || '{}');
@@ -431,59 +511,69 @@ function closeSidebar() {
 
 /* ========== 事件绑定 ========== */
 function bindEvents() {
-  // 词汇包切换
   $$('.pack-btn').forEach(btn => {
     btn.addEventListener('click', () => switchPack(btn.dataset.pack));
   });
 
-  // 场景切换 - 侧边栏
   $('#cat-list').addEventListener('click', (e) => {
     const btn = e.target.closest('.cat-btn-sidebar');
     if (btn) switchCategory(btn.dataset.cat);
   });
 
-  // 场景切换 - "全部"按钮
   $$('.cat-btn').forEach(btn => {
     btn.addEventListener('click', () => { if (btn.dataset.cat) switchCategory(btn.dataset.cat); });
   });
 
-  // 场景切换 - 移动端
   $('#cat-scroll').addEventListener('click', (e) => {
     const chip = e.target.closest('.cat-chip');
     if (chip) switchCategory(chip.dataset.cat);
   });
 
-  // 模式切换
   $$('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => switchMode(btn.dataset.mode));
   });
 
-  // 学习模式
+  // 学习模式 - 卡片翻转
   $('#flip-btn').addEventListener('click', flipCard);
   $('#flip-back-btn').addEventListener('click', flipCard);
-  $('#known-btn').addEventListener('click', () => {
-    if (state.wordPool.length === 0) return;
-    const w = state.wordPool[state.currentIndex];
-    if (w) setMastered(w.w, true);
-    nextWord();
+
+  // 掌握度等级按钮
+  $$('.level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.wordPool.length === 0) return;
+      const w = state.wordPool[state.currentIndex];
+      if (w) setMasteryLevel(w.w, parseInt(btn.dataset.level));
+    });
   });
-  $('#review-btn').addEventListener('click', () => {
-    if (state.wordPool.length === 0) return;
+
+  // 掌握度圆点点击
+  $('#mastery-indicator').addEventListener('click', (e) => {
+    const dot = e.target.closest('.mastery-dot');
+    if (!dot || state.wordPool.length === 0) return;
     const w = state.wordPool[state.currentIndex];
-    if (w) setMastered(w.w, false);
-    nextWord();
+    if (w) setMasteryLevel(w.w, parseInt(dot.dataset.lv));
   });
+
+  // 上一个 / 下一个
+  $('#prev-btn').addEventListener('click', prevWord);
   $('#skip-btn').addEventListener('click', nextWord);
 
-  // 测验模式
+  // 笔记自动保存（失焦时）
+  $('#notes-input').addEventListener('blur', () => {
+    if (state.wordPool.length === 0) return;
+    const w = state.wordPool[state.currentIndex];
+    if (w) setNote(w.w, $('#notes-input').value);
+  });
+
+  // 测验
   $('#quiz-next-btn').addEventListener('click', nextQuiz);
 
-  // 拼写模式
+  // 拼写
   $('#spell-submit-btn').addEventListener('click', handleSpellSubmit);
   $('#spell-input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSpellSubmit(); });
   $('#spell-next-btn').addEventListener('click', nextSpell);
 
-  // 主题切换
+  // 主题
   $('#theme-toggle-desktop')?.addEventListener('click', toggleTheme);
   $('#theme-toggle-mobile')?.addEventListener('click', toggleTheme);
 
@@ -491,52 +581,45 @@ function bindEvents() {
   $('#menu-toggle').addEventListener('click', toggleSidebar);
   $('#overlay').addEventListener('click', closeSidebar);
 
-  // 键盘快捷键（学习模式）
+  // 键盘快捷键
   document.addEventListener('keydown', e => {
     if (state.currentMode !== 'learn') return;
-    if (e.target.tagName === 'INPUT') return;
-    if (e.key === 'ArrowLeft' || e.key === ' ') { e.preventDefault(); flipCard(); }
-    if (e.key === 'ArrowRight') nextWord();
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === ' ') { e.preventDefault(); flipCard(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prevWord(); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); nextWord(); }
+    // 数字键 1-4 快速设置掌握度
+    if (e.key >= '1' && e.key <= '4' && state.wordPool.length > 0) {
+      const w = state.wordPool[state.currentIndex];
+      if (w) setMasteryLevel(w.w, parseInt(e.key));
+    }
   });
 }
 
 /* ========== 主题切换 ========== */
-function getTheme() {
-  return localStorage.getItem('englearn_theme') || 'light';
-}
-
+function getTheme() { return localStorage.getItem('englearn_theme') || 'light'; }
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('englearn_theme', theme);
 }
-
 function toggleTheme() {
-  const current = getTheme();
-  const next = current === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
+  applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
 }
 
 /* ========== 初始化 ========== */
 function init() {
-  // 应用保存的主题
   applyTheme(getTheme());
-
   loadProgress();
 
-  // 验证当前 category 是否在数据中存在
   const data = getData();
   if (state.currentCat !== 'all' && !data[state.currentCat]) {
     state.currentCat = 'all';
   }
 
-  // 渲染场景目录
   renderCategoryDirectory();
   updateCategoryActive();
-
-  // 高亮当前词汇包
   $$('.pack-btn').forEach(b => b.classList.toggle('active', b.dataset.pack === state.currentPack));
 
-  // 构建词汇池
   refreshPool();
   updateProgress();
   switchMode('learn');

@@ -341,7 +341,7 @@ body {
 .card-inner {
   position: relative;
   width: 100%;
-  min-height: 380px;
+  min-height: 420px;
   transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
   transform-style: preserve-3d;
 }
@@ -355,12 +355,12 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 32px;
+  padding: 36px 32px;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-light);
-  min-height: 380px;
+  min-height: 420px;
 }
 
 .card-back { transform: rotateY(180deg); }
@@ -373,7 +373,35 @@ body {
   letter-spacing: -0.01em;
 }
 
-.phonetic-text { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 28px; }
+.phonetic-text { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 16px; }
+
+/* Mastery Indicator */
+.mastery-indicator {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 6px;
+}
+
+.mastery-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.mastery-dot:hover { transform: scale(1.3); }
+
+.mastery-dot.lv1 { background: var(--dusty-rose); }
+.mastery-dot.lv2 { background: var(--dusty-rose-light); }
+.mastery-dot.lv3 { background: var(--sage-light); }
+.mastery-dot.lv4 { background: var(--sage-dark); }
+
+.mastery-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  transition: color var(--transition);
+}
 
 .flip-btn {
   padding: 12px 32px;
@@ -407,6 +435,39 @@ body {
 .example-en { font-size: 1rem; color: var(--text-primary); font-style: italic; margin-bottom: 4px; }
 .example-zh { font-size: 0.9rem; color: var(--text-secondary); }
 
+/* Notes / Reflection */
+.notes-area {
+  width: 100%; max-width: 440px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.notes-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.notes-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.notes-input:focus { border-color: var(--dusty-purple-light); }
+.notes-input::placeholder { color: var(--text-muted); }
+
 .learn-actions {
   display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
   max-width: 560px; margin: 0 auto;
@@ -424,10 +485,16 @@ body {
   color: var(--text-primary);
 }
 .action-btn:hover { box-shadow: var(--shadow-sm); }
-.known-btn { border-color: var(--success); color: var(--success); }
-.known-btn:hover { background: var(--success); color: #fff; }
-.review-btn { border-color: var(--warm-gold); color: var(--warm-gold); }
-.review-btn:hover { background: var(--warm-gold); color: #fff; }
+
+.level-btn { border-color: var(--border); color: var(--text-muted); }
+.level-btn:hover { box-shadow: var(--shadow-sm); }
+.level-btn.lv1:hover, .level-btn.lv1.active { background: var(--dusty-rose); border-color: var(--dusty-rose); color: #fff; }
+.level-btn.lv2:hover, .level-btn.lv2.active { background: var(--dusty-rose-light); border-color: var(--dusty-rose-light); color: #fff; }
+.level-btn.lv3:hover, .level-btn.lv3.active { background: var(--sage-light); border-color: var(--sage-light); color: #fff; }
+.level-btn.lv4:hover, .level-btn.lv4.active { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
+
+.prev-btn { border-color: var(--text-muted); color: var(--text-muted); }
+.prev-btn:hover { background: var(--text-muted); color: #fff; }
 .skip-btn { border-color: var(--dusty-purple); color: var(--dusty-purple); }
 .skip-btn:hover { background: var(--dusty-purple); color: #fff; }
 
@@ -547,8 +614,8 @@ body {
 
   .word-text { font-size: 2.2rem; }
   .meaning-text { font-size: 1.3rem; }
-  .card-front, .card-back { padding: 28px 18px; min-height: 300px; }
-  .card-inner { min-height: 300px; }
+  .card-front, .card-back { padding: 24px 18px; min-height: 340px; }
+  .card-inner { min-height: 340px; }
 
   .quiz-options { grid-template-columns: 1fr; }
   .quiz-question { font-size: 1.4rem; }
@@ -564,8 +631,8 @@ body {
   .mode-selector { gap: 4px; }
   .mode-btn { padding: 6px 10px; font-size: 0.76rem; }
   .word-text { font-size: 1.8rem; }
-  .card-front, .card-back { padding: 22px 14px; min-height: 260px; }
-  .card-inner { min-height: 260px; }
+  .card-front, .card-back { padding: 20px 14px; min-height: 300px; }
+  .card-inner { min-height: 300px; }
   .quiz-question { font-size: 1.2rem; }
   .example-box { padding: 14px 16px; }
 }

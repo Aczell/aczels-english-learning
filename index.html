@@ -110,6 +110,13 @@
             <div class="card-front">
               <h2 class="word-text" id="word-text">—</h2>
               <p class="phonetic-text" id="phonetic-text"></p>
+              <div class="mastery-indicator" id="mastery-indicator" title="掌握程度">
+                <span class="mastery-dot" data-lv="1"></span>
+                <span class="mastery-dot" data-lv="2"></span>
+                <span class="mastery-dot" data-lv="3"></span>
+                <span class="mastery-dot" data-lv="4"></span>
+              </div>
+              <p class="mastery-label" id="mastery-label">未学习</p>
               <button class="flip-btn" id="flip-btn">查看释义 →</button>
             </div>
             <div class="card-back">
@@ -118,13 +125,20 @@
                 <p class="example-en" id="example-en"></p>
                 <p class="example-zh" id="example-zh"></p>
               </div>
+              <div class="notes-area" id="notes-area">
+                <label class="notes-label" for="notes-input">📝 反思小记</label>
+                <textarea class="notes-input" id="notes-input" placeholder="写点记忆技巧、联想或例句…" rows="3"></textarea>
+              </div>
               <button class="flip-btn" id="flip-back-btn">← 返回</button>
             </div>
           </div>
         </div>
         <div class="learn-actions">
-          <button class="action-btn known-btn" id="known-btn">✓ 已掌握</button>
-          <button class="action-btn review-btn" id="review-btn">↻ 待复习</button>
+          <button class="action-btn level-btn lv1" data-level="1">🌱 初识</button>
+          <button class="action-btn level-btn lv2" data-level="2">🌿 了解</button>
+          <button class="action-btn level-btn lv3" data-level="3">🌳 掌握</button>
+          <button class="action-btn level-btn lv4" data-level="4">⭐ 熟练</button>
+          <button class="action-btn prev-btn" id="prev-btn">← 上一个</button>
           <button class="action-btn skip-btn" id="skip-btn">→ 下一个</button>
         </div>
       </main>
