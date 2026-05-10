@@ -498,6 +498,50 @@ function saveQuizStats(isCorrect) {
   updateProgress();
 }
 
+/* ========== 重置进度 ========== */
+function resetProgress() {
+  const pool = state.wordPool;
+  if (pool.length === 0) return;
+
+  // 构建确认消息
+  const masteredInPool = pool.filter(w => getMasteryLevel(w.w) > 0).length;
+  const notesInPool = pool.filter(w => getNote(w.w)).length;
+
+  if (masteredInPool === 0 && notesInPool === 0) {
+    alert('当前场景暂无掌握度或笔记可清除。');
+    return;
+  }
+
+  let msg = `确定清除当前场景「${state.currentCat === 'all' ? '全部词汇' : getCatInfo(state.currentCat)?.name || state.currentCat}」的数据？\n\n`;
+  if (masteredInPool > 0) msg += `• ${masteredInPool} 个单词的掌握度将被清零\n`;
+  if (notesInPool > 0) msg += `• ${notesInPool} 条反思笔记将被删除\n`;
+
+  if (!confirm(msg)) return;
+
+  // 清除
+  const prefix = state.currentPack + '|';
+  pool.forEach(w => {
+    const key = prefix + w.w;
+    delete state.mastery[key];
+    delete state.notes[key];
+  });
+
+  // 也清除测验统计
+  const quizKey = state.currentPack + '_' + state.currentCat;
+  const quizStats = JSON.parse(localStorage.getItem('englearn_quiz_stats') || '{}');
+  delete quizStats[quizKey];
+  localStorage.setItem('englearn_quiz_stats', JSON.stringify(quizStats));
+
+  saveProgress();
+  updateProgress();
+
+  if (state.currentMode === 'learn') {
+    updateMasteryUI();
+    updateLevelBtns();
+    $('#notes-input').value = '';
+  }
+}
+
 /* ========== 移动端侧边栏 ========== */
 function toggleSidebar() {
   $('#sidebar').classList.toggle('open');
@@ -564,6 +608,9 @@ function bindEvents() {
     const w = state.wordPool[state.currentIndex];
     if (w) setNote(w.w, $('#notes-input').value);
   });
+
+  // 重置进度
+  $('#reset-btn').addEventListener('click', resetProgress);
 
   // 测验
   $('#quiz-next-btn').addEventListener('click', nextQuiz);
