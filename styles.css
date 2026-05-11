@@ -519,7 +519,7 @@ body {
   border: 1px solid var(--border-light);
 }
 
-.card-back { transform: rotateY(180deg); overflow-y: auto; }
+.card-back { transform: rotateY(180deg); }
 
 .word-text {
   font-size: 3rem;
@@ -884,8 +884,8 @@ body {
   .speak-btn { width: 32px; height: 32px; font-size: 0.9rem; }
   .accent-btn { width: 32px; height: 32px; font-size: 0.78rem; }
   .meaning-text { font-size: 1.3rem; }
-  .card-front, .card-back { padding: 24px 18px; }
-  .card-inner { min-height: 420px; }
+  .card-front, .card-back { padding: 24px 18px 32px; }
+  .card-inner { min-height: 480px; }
 
   .quiz-options { grid-template-columns: 1fr; }
   .quiz-question { font-size: 1.4rem; }
