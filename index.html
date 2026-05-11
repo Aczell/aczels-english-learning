@@ -39,6 +39,8 @@
         </button>
         <nav class="cat-list" id="cat-list"></nav>
       </div>
+
+      <p class="sidebar-version">v1.2.1</p>
     </aside>
 
     <!-- Main -->
@@ -84,6 +86,16 @@
         </button>
       </nav>
 
+      <!-- Search Bar -->
+      <div class="search-area">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="search-input" placeholder="搜索单词或释义..." autocomplete="off">
+          <button class="search-clear hidden" id="search-clear" aria-label="清除搜索">✕</button>
+        </div>
+        <div class="search-results hidden" id="search-results"></div>
+      </div>
+
       <!-- Category indicator -->
       <div class="cat-indicator" id="cat-indicator">
         <span class="cat-indicator-text">📋 当前场景：<strong>全部词汇</strong></span>
@@ -106,39 +118,47 @@
 
       <!-- Learn Mode -->
       <main class="main-content" id="learn-mode">
-        <div class="word-card">
-          <div class="card-inner" id="card-inner">
-            <div class="card-front">
-              <h2 class="word-text" id="word-text">—</h2>
-              <p class="phonetic-text" id="phonetic-text"></p>
-              <div class="mastery-indicator" id="mastery-indicator" title="掌握程度">
-                <span class="mastery-dot" data-lv="1"></span>
-                <span class="mastery-dot" data-lv="2"></span>
-                <span class="mastery-dot" data-lv="3"></span>
-                <span class="mastery-dot" data-lv="4"></span>
+        <div class="learn-row">
+          <div class="word-card">
+            <div class="card-inner" id="card-inner">
+              <div class="card-front">
+                <h2 class="word-text" id="word-text">—</h2>
+                <div class="phonetic-row">
+                  <p class="phonetic-text" id="phonetic-text"></p>
+                  <button class="speak-btn" id="speak-btn" aria-label="听发音" title="听发音">🔊</button>
+                  <button class="accent-btn" id="accent-btn" aria-label="切换口音" title="切换口音">🇺🇸</button>
+                </div>
+                <div class="mastery-indicator" id="mastery-indicator" title="掌握程度">
+                  <span class="mastery-dot" data-lv="1"></span>
+                  <span class="mastery-dot" data-lv="2"></span>
+                  <span class="mastery-dot" data-lv="3"></span>
+                  <span class="mastery-dot" data-lv="4"></span>
+                </div>
+                <p class="mastery-label" id="mastery-label">未学习</p>
+                <button class="flip-btn" id="flip-btn">查看释义 →</button>
               </div>
-              <p class="mastery-label" id="mastery-label">未学习</p>
-              <button class="flip-btn" id="flip-btn">查看释义 →</button>
-            </div>
-            <div class="card-back">
-              <p class="meaning-text" id="meaning-text"></p>
-              <div class="example-box">
-                <p class="example-en" id="example-en"></p>
-                <p class="example-zh" id="example-zh"></p>
+              <div class="card-back">
+                <p class="meaning-text" id="meaning-text"></p>
+                <div class="example-box">
+                  <p class="example-en" id="example-en"></p>
+                  <p class="example-zh" id="example-zh"></p>
+                </div>
+                <div class="notes-area" id="notes-area">
+                  <label class="notes-label" for="notes-input">📝 反思小记</label>
+                  <textarea class="notes-input" id="notes-input" placeholder="写点记忆技巧、联想或例句…" rows="3"></textarea>
+                </div>
+                <button class="flip-btn" id="flip-back-btn">← 返回</button>
               </div>
-              <div class="notes-area" id="notes-area">
-                <label class="notes-label" for="notes-input">📝 反思小记</label>
-                <textarea class="notes-input" id="notes-input" placeholder="写点记忆技巧、联想或例句…" rows="3"></textarea>
-              </div>
-              <button class="flip-btn" id="flip-back-btn">← 返回</button>
             </div>
           </div>
+          <div class="mastery-actions">
+            <button class="action-btn level-btn lv1" data-level="1">🌱 初识</button>
+            <button class="action-btn level-btn lv2" data-level="2">🌿 了解</button>
+            <button class="action-btn level-btn lv3" data-level="3">🌳 掌握</button>
+            <button class="action-btn level-btn lv4" data-level="4">⭐ 熟练</button>
+          </div>
         </div>
-        <div class="learn-actions">
-          <button class="action-btn level-btn lv1" data-level="1">🌱 初识</button>
-          <button class="action-btn level-btn lv2" data-level="2">🌿 了解</button>
-          <button class="action-btn level-btn lv3" data-level="3">🌳 掌握</button>
-          <button class="action-btn level-btn lv4" data-level="4">⭐ 熟练</button>
+        <div class="nav-actions">
           <button class="action-btn prev-btn" id="prev-btn">← 上一个</button>
           <button class="action-btn skip-btn" id="skip-btn">→ 下一个</button>
         </div>

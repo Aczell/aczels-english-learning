@@ -226,6 +226,7 @@ function switchCategory(cat) {
   refreshPool();
   updateProgress();
   resetCurrentMode();
+  closeSearch();
 }
 
 function switchPack(pack) {
@@ -238,12 +239,28 @@ function switchPack(pack) {
   refreshPool();
   updateProgress();
   resetCurrentMode();
+  closeSearch();
   $$('.pack-btn').forEach(b => b.classList.toggle('active', b.dataset.pack === pack));
 }
 
 function resetCurrentMode() { switchMode(state.currentMode); }
 
 function switchMode(mode) {
+  // 离开学习模式前，先瞬间把卡片翻回正面
+  if (state.currentMode === 'learn' && mode !== 'learn') {
+    const card = $('#card-inner');
+    if (card.classList.contains('flipped')) {
+      card.style.transition = 'none';
+      card.classList.remove('flipped');
+      void card.offsetHeight;
+      card.style.transition = '';
+    }
+    if (state.wordPool.length > 0) {
+      const w = state.wordPool[state.currentIndex];
+      if (w) setNote(w.w, $('#notes-input').value);
+    }
+  }
+
   state.currentMode = mode;
   state.quizWords = [];
   state.quizIndex = 0;
@@ -255,8 +272,8 @@ function switchMode(mode) {
   $('#spell-mode').classList.add('hidden');
 
   if (mode === 'learn') {
-    $('#learn-mode').classList.remove('hidden');
     if (state.wordPool.length === 0) return;
+    $('#learn-mode').classList.remove('hidden');
     renderLearnMode();
   } else if (mode === 'meaning' || mode === 'word') {
     $('#quiz-mode').classList.remove('hidden');
@@ -279,12 +296,22 @@ function renderLearnMode() {
   }
 
   const w = state.wordPool[state.currentIndex];
+
+  // 如果卡片处于翻转状态，先瞬间翻回正面再更新内容，避免看到新单词的释义
+  const card = $('#card-inner');
+  if (card.classList.contains('flipped')) {
+    card.style.transition = 'none';
+    card.classList.remove('flipped');
+    // 强制回流，确保 transition: none 生效后再恢复
+    void card.offsetHeight;
+    card.style.transition = '';
+  }
+
   $('#word-text').textContent = w.w;
   $('#phonetic-text').textContent = w.p;
   $('#meaning-text').textContent = w.m;
   $('#example-en').textContent = w.e;
   $('#example-zh').textContent = w.ez;
-  $('#card-inner').classList.remove('flipped');
 
   // 反思笔记
   $('#notes-input').value = getNote(w.w);
@@ -498,6 +525,178 @@ function saveQuizStats(isCorrect) {
   updateProgress();
 }
 
+/* ========== 发音功能 ========== */
+function getAccent() {
+  return localStorage.getItem('englearn_accent') || 'us';
+}
+
+function setAccent(accent) {
+  localStorage.setItem('englearn_accent', accent);
+  $('#accent-btn').textContent = accent === 'uk' ? '🇬🇧' : '🇺🇸';
+}
+
+function getEnglishVoice() {
+  const voices = speechSynthesis.getVoices();
+  const accent = getAccent();
+  const preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
+
+  // 精确匹配首选口音
+  let voice = voices.find(v => v.lang === preferLang && v.localService);
+  // 模糊匹配首选口音
+  if (!voice) voice = voices.find(v => v.lang.startsWith(preferLang.substring(0, 4)) && v.localService);
+  // 回退：同语系本地语音
+  if (!voice) voice = voices.find(v => v.lang.startsWith('en-') && v.localService);
+  // 任意英文语音
+  if (!voice) voice = voices.find(v => v.lang.startsWith('en-'));
+  // 系统默认
+  if (!voice) voice = voices[0];
+
+  return voice || null;
+}
+
+function speakWord(word) {
+  speechSynthesis.cancel();
+  const btn = $('#speak-btn');
+  btn.classList.add('speaking');
+
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.voice = getEnglishVoice();
+  utter.lang = getAccent() === 'uk' ? 'en-GB' : 'en-US';
+  utter.rate = 0.85;
+  utter.pitch = 1;
+
+  utter.onend = () => btn.classList.remove('speaking');
+  utter.onerror = () => btn.classList.remove('speaking');
+
+  speechSynthesis.speak(utter);
+}
+
+function toggleAccent() {
+  setAccent(getAccent() === 'uk' ? 'us' : 'uk');
+  // 如果正在学习模式，立即用新口音朗读当前单词
+  if (state.currentMode === 'learn' && state.wordPool.length > 0) {
+    const w = state.wordPool[state.currentIndex];
+    if (w) speakWord(w.w);
+  }
+}
+
+/* 预加载语音列表（部分浏览器异步获取） */
+speechSynthesis.getVoices();
+
+/* ========== 搜索功能 ========== */
+let searchDebounceTimer = null;
+
+function searchWords(query) {
+  const q = query.trim().toLowerCase();
+  const data = getData();
+  const results = [];
+
+  if (!q) return results;
+
+  Object.keys(data).forEach(catKey => {
+    const cat = data[catKey];
+    cat.words.forEach(w => {
+      if (w.w.toLowerCase().includes(q) || w.m.includes(q)) {
+        results.push({ ...w, category: catKey, categoryName: cat.name });
+      }
+    });
+  });
+
+  // 精确匹配排前，前缀匹配次之
+  results.sort((a, b) => {
+    const aExact = a.w.toLowerCase() === q || a.m === q;
+    const bExact = b.w.toLowerCase() === q || b.m === q;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    const aPrefix = a.w.toLowerCase().startsWith(q);
+    const bPrefix = b.w.toLowerCase().startsWith(q);
+    if (aPrefix && !bPrefix) return -1;
+    if (!aPrefix && bPrefix) return 1;
+    return 0;
+  });
+
+  return results;
+}
+
+function renderSearchResults(results) {
+  const container = $('#search-results');
+  container.innerHTML = '';
+
+  if (!results.length) {
+    container.innerHTML = '<div class="search-empty">未找到匹配的单词</div>';
+    container.classList.remove('hidden');
+    return;
+  }
+
+  results.slice(0, 30).forEach((w, i) => {
+    const lv = getMasteryLevel(w.w);
+    const lvInfo = MASTERY[lv];
+    const item = document.createElement('div');
+    item.className = 'search-result-item';
+    item.innerHTML = `
+      <span class="search-result-word">${w.w}</span>
+      <span class="search-result-meaning">${w.m}</span>
+      <span class="search-result-level" style="background:${lvInfo.color}20;color:${lvInfo.color}">${lvInfo.label}</span>
+    `;
+    item.addEventListener('click', () => selectSearchResult(w));
+    item.addEventListener('mousedown', e => e.preventDefault()); // 防止blur先触发
+    container.appendChild(item);
+  });
+
+  if (results.length > 30) {
+    const more = document.createElement('div');
+    more.className = 'search-empty';
+    more.textContent = `还有 ${results.length - 30} 个结果，请输入更精确的关键词`;
+    container.appendChild(more);
+  }
+
+  container.classList.remove('hidden');
+}
+
+function selectSearchResult(word) {
+  // 先检查当前 pool 中是否有该词
+  let idx = state.wordPool.findIndex(w => w.w === word.w);
+  if (idx < 0) {
+    // 不在当前场景，切换到 all 后重建 pool
+    if (state.currentCat !== 'all') {
+      state.currentCat = 'all';
+      saveProgress();
+      updateCategoryActive();
+    }
+    refreshPool();
+    idx = state.wordPool.findIndex(w => w.w === word.w);
+  }
+  state.currentIndex = idx >= 0 ? idx : 0;
+  // 切换到学习模式并渲染
+  switchMode('learn');
+  renderLearnMode();
+  // 关闭搜索
+  $('#search-results').classList.add('hidden');
+  $('#search-input').value = '';
+  $('#search-clear').classList.add('hidden');
+}
+
+function handleSearchInput() {
+  const query = $('#search-input').value;
+  if (query.trim()) {
+    $('#search-clear').classList.remove('hidden');
+  } else {
+    $('#search-clear').classList.add('hidden');
+    $('#search-results').classList.add('hidden');
+    return;
+  }
+
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    const results = searchWords(query);
+    renderSearchResults(results);
+  }, 150);
+}
+
+function closeSearch() {
+  $('#search-results').classList.add('hidden');
+}
+
 /* ========== 重置进度 ========== */
 function resetProgress() {
   const pool = state.wordPool;
@@ -581,6 +780,16 @@ function bindEvents() {
   $('#flip-btn').addEventListener('click', flipCard);
   $('#flip-back-btn').addEventListener('click', flipCard);
 
+  // 发音按钮
+  $('#speak-btn').addEventListener('click', () => {
+    if (state.wordPool.length === 0) return;
+    const w = state.wordPool[state.currentIndex];
+    if (w) speakWord(w.w);
+  });
+
+  // 口音切换
+  $('#accent-btn').addEventListener('click', toggleAccent);
+
   // 掌握度等级按钮
   $$('.level-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -624,6 +833,24 @@ function bindEvents() {
   $('#theme-toggle-desktop')?.addEventListener('click', toggleTheme);
   $('#theme-toggle-mobile')?.addEventListener('click', toggleTheme);
 
+  // 搜索
+  $('#search-input').addEventListener('input', handleSearchInput);
+  $('#search-input').addEventListener('focus', () => {
+    if ($('#search-input').value.trim()) handleSearchInput();
+  });
+  $('#search-input').addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeSearch(); $('#search-input').blur(); }
+  });
+  $('#search-clear').addEventListener('click', () => {
+    $('#search-input').value = '';
+    $('#search-clear').classList.add('hidden');
+    $('#search-results').classList.add('hidden');
+    $('#search-input').focus();
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.search-area')) closeSearch();
+  });
+
   // 移动端菜单
   $('#menu-toggle').addEventListener('click', toggleSidebar);
   $('#overlay').addEventListener('click', closeSidebar);
@@ -635,6 +862,10 @@ function bindEvents() {
     if (e.key === ' ') { e.preventDefault(); flipCard(); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); prevWord(); }
     if (e.key === 'ArrowRight') { e.preventDefault(); nextWord(); }
+    if (e.key === 's' && state.wordPool.length > 0) {
+      const w = state.wordPool[state.currentIndex];
+      if (w) speakWord(w.w);
+    }
     // 数字键 1-4 快速设置掌握度
     if (e.key >= '1' && e.key <= '4' && state.wordPool.length > 0) {
       const w = state.wordPool[state.currentIndex];
@@ -657,6 +888,7 @@ function toggleTheme() {
 function init() {
   applyTheme(getTheme());
   loadProgress();
+  setAccent(getAccent());
 
   const data = getData();
   if (state.currentCat !== 'all' && !data[state.currentCat]) {
@@ -669,7 +901,14 @@ function init() {
 
   refreshPool();
   updateProgress();
+  // 首次加载不播放入场动画
+  $('#learn-mode').classList.add('no-anim');
   switchMode('learn');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      $('#learn-mode').classList.remove('no-anim');
+    });
+  });
   bindEvents();
 }
 
