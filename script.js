@@ -536,27 +536,25 @@ function setAccent(accent) {
 }
 
 function getEnglishVoice() {
+  if (typeof speechSynthesis === 'undefined') return null;
   const voices = speechSynthesis.getVoices();
   const accent = getAccent();
   const preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
 
-  // 精确匹配首选口音
   let voice = voices.find(v => v.lang === preferLang && v.localService);
-  // 模糊匹配首选口音
   if (!voice) voice = voices.find(v => v.lang.startsWith(preferLang.substring(0, 4)) && v.localService);
-  // 回退：同语系本地语音
   if (!voice) voice = voices.find(v => v.lang.startsWith('en-') && v.localService);
-  // 任意英文语音
   if (!voice) voice = voices.find(v => v.lang.startsWith('en-'));
-  // 系统默认
   if (!voice) voice = voices[0];
 
   return voice || null;
 }
 
 function speakWord(word) {
+  if (typeof speechSynthesis === 'undefined') return;
   speechSynthesis.cancel();
   const btn = $('#speak-btn');
+  if (!btn) return;
   btn.classList.add('speaking');
 
   const utter = new SpeechSynthesisUtterance(word);
@@ -581,7 +579,9 @@ function toggleAccent() {
 }
 
 /* 预加载语音列表（部分浏览器异步获取） */
-speechSynthesis.getVoices();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.getVoices();
+}
 
 /* ========== 搜索功能 ========== */
 let searchDebounceTimer = null;

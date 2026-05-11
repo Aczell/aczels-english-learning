@@ -833,124 +833,202 @@ body {
   animation: none;
 }
 
-/* ========== Responsive ========== */
+/* ========== Responsive: 移动端完全重写 ========== */
 @media (max-width: 820px) {
+  /* ---- 基础布局 ---- */
   .mobile-only { display: flex !important; }
+  .layout { display: block; }
+  .main-area { margin: 0; max-width: 100%; padding: 12px 12px 100px; }
 
+  /* ---- 侧边栏：点击时从左侧滑入 ---- */
   .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 260px; z-index: 200;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    padding: 16px 14px 24px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
     transform: translateX(-100%);
-    box-shadow: none;
+    transition: transform 0.25s ease;
   }
-  .sidebar.open {
-    transform: translateX(0);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.15); }
+
+  /* ---- 遮罩 ---- */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 150;
   }
 
-  .main-area { margin: 0; max-width: 100%; padding: 16px 14px 36px; }
+  /* ---- 顶部导航 ---- */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .header .logo { font-size: 1.15rem; }
 
-  .pack-selector.mobile-only { display: flex !important; }
-  .cat-scroll.mobile-only { display: flex !important; }
+  .pack-selector { display: flex !important; gap: 8px; margin-bottom: 8px; }
+  .pack-selector .pack-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 8px 12px; font-size: 0.85rem;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--card-bg); color: var(--text-secondary); cursor: pointer;
+  }
+  .pack-selector .pack-btn.active { background: var(--sage); border-color: var(--sage); color: #fff; }
 
-  .mode-selector { gap: 5px; }
-  .mode-btn { padding: 7px 12px; font-size: 0.8rem; }
+  .cat-scroll {
+    display: flex !important; gap: 6px; overflow-x: auto;
+    padding-bottom: 6px; margin-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-scroll .cat-chip {
+    flex-shrink: 0; padding: 5px 12px; font-size: 0.78rem;
+    border: 1px solid var(--border); border-radius: 16px;
+    background: var(--card-bg); color: var(--text-secondary);
+    cursor: pointer; white-space: nowrap;
+  }
+  .cat-scroll .cat-chip.active { background: var(--dusty-purple); border-color: var(--dusty-purple); color: #fff; }
 
-  /* Learn row stacks vertically on mobile */
+  /* ---- 模式选择器 ---- */
+  .mode-selector { gap: 4px; margin-bottom: 8px; }
+  .mode-btn { padding: 6px 10px; font-size: 0.78rem; gap: 3px; }
+  .mode-btn svg { width: 13px; height: 13px; }
+
+  /* ---- 搜索 ---- */
+  .search-area { max-width: 100%; margin-bottom: 8px; }
+  .search-box { padding: 8px 10px; }
+  .search-input { font-size: 0.85rem; }
+
+  /* ---- 场景指示器 ---- */
+  .cat-indicator { margin-bottom: 8px; }
+  .cat-indicator-text { font-size: 0.78rem; }
+
+  /* ---- 进度条 ---- */
+  .progress-area { max-width: 100%; padding: 10px 14px; margin-bottom: 14px; }
+  .progress-info { font-size: 0.78rem; }
+  .reset-btn { font-size: 0.72rem; }
+
+  /* ---- 学习行：垂直堆叠 ---- */
   .learn-row {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    display: flex; flex-direction: column;
+    gap: 10px; margin-bottom: 14px;
   }
   .learn-row::before { display: none; }
 
-  /* Mastery buttons inline on mobile */
+  /* 熟练度按钮：水平排列 */
   .mastery-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    width: auto;
+    display: flex; flex-direction: row; flex-wrap: wrap;
+    justify-content: center; gap: 6px; width: auto;
   }
   .mastery-actions .level-btn {
-    padding: 9px 14px;
-    font-size: 0.8rem;
-    width: auto;
+    padding: 10px 16px; font-size: 0.82rem;
+    min-width: auto; width: auto;
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--card-bg); color: var(--text-secondary); cursor: pointer;
   }
 
-  .nav-actions { gap: 6px; }
-  .prev-btn, .skip-btn { padding: 9px 16px; font-size: 0.82rem; }
+  /* 导航按钮 */
+  .nav-actions { display: flex; gap: 8px; justify-content: center; }
+  .prev-btn, .skip-btn { padding: 12px 28px; font-size: 0.9rem; }
 
-  .word-text { font-size: 2.2rem; }
-  .phonetic-row { gap: 8px; }
-  .speak-btn { width: 32px; height: 32px; font-size: 0.9rem; }
-  .accent-btn { width: 32px; height: 32px; font-size: 0.78rem; }
-  .meaning-text { font-size: 1.3rem; }
+  /* ====== 卡片 ====== */
+  .word-card { width: 100%; max-width: 100%; perspective: none; }
 
-  /* 移动端：放弃 3D 翻转，改用简单切换 */
   .card-inner {
-    position: relative;
-    width: 100%;
-    min-height: 480px;
-    transform-style: flat;
-    transition: none;
+    position: relative; width: 100%; min-height: auto;
+    transform-style: flat; transition: none;
   }
   .card-inner.flipped { transform: none; }
-  .card-front, .card-back {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    min-height: 480px;
-    padding: 24px 18px 32px;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-light);
-    background: var(--card-bg);
-    backface-visibility: visible;
-    transform: none !important;
-    transition: opacity 0.3s ease;
+
+  /* 正面始终显示，翻转时才隐藏 */
+  .card-front {
+    position: relative; inset: auto; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 28px 18px 24px; min-height: 360px;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light); background: var(--card-bg);
+    backface-visibility: visible; transform: none;
   }
-  .card-front { display: flex; }
-  .card-back { display: none; }
+
+  /* 背面默认隐藏 */
+  .card-back {
+    position: relative; inset: auto; width: 100%;
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; padding: 24px 18px 28px; min-height: 360px;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light); background: var(--card-bg);
+    backface-visibility: visible; transform: none;
+  }
+
+  /* 翻转状态：正面隐藏，背面显示 */
   .card-inner.flipped .card-front { display: none; }
   .card-inner.flipped .card-back { display: flex; }
-  .card-inner.flipped .card-front,
-  .card-inner:not(.flipped) .card-back { opacity: 0; pointer-events: none; }
-  .card-inner.flipped .card-back,
-  .card-inner:not(.flipped) .card-front { opacity: 1; pointer-events: auto; }
 
-  .quiz-options { grid-template-columns: 1fr; }
-  .quiz-question { font-size: 1.4rem; }
-  .spell-meaning { font-size: 1.25rem; }
-  .action-btn { padding: 11px 20px; font-size: 0.86rem; }
+  /* ---- 卡片内容 ---- */
+  .word-text { font-size: 2rem; margin-bottom: 4px; }
+  .phonetic-row { gap: 8px; margin-bottom: 12px; }
+  .phonetic-text { font-size: 1rem; }
+  .speak-btn { width: 34px; height: 34px; font-size: 0.95rem; }
+  .accent-btn { width: 34px; height: 34px; font-size: 0.8rem; }
+  .meaning-text { font-size: 1.25rem; margin-bottom: 12px; }
+  .example-box { padding: 14px 16px; margin-bottom: 16px; }
+  .example-en { font-size: 0.9rem; }
+  .example-zh { font-size: 0.82rem; }
+  .notes-input { font-size: 0.85rem; padding: 8px 10px; }
+  .flip-btn { padding: 10px 28px; font-size: 0.88rem; }
 
-  .progress-area { max-width: 100%; }
-  .word-card, .quiz-card, .spell-card, .nav-actions, .quiz-stats, .search-area { max-width: 100%; }
+  .action-btn { padding: 12px 24px; font-size: 0.9rem; }
+
+  /* ---- 测验/拼写 ---- */
+  .quiz-card, .spell-card { max-width: 100%; padding: 24px 18px; }
+  .quiz-question { font-size: 1.3rem; }
+  .quiz-options { grid-template-columns: 1fr; gap: 8px; }
+  .quiz-option { padding: 14px 16px; font-size: 0.9rem; }
+  .spell-meaning { font-size: 1.2rem; }
+  .spell-input { font-size: 1rem; min-width: 0; }
+  .quiz-stats { max-width: 100%; font-size: 0.82rem; }
+
+  /* ---- 浮动主题按钮 ---- */
+  .theme-toggle.mobile-only {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 44px; height: 44px;
+    border-radius: 50%; border: 1.5px solid var(--border);
+    background: var(--card-bg); box-shadow: var(--shadow-md);
+    cursor: pointer; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+
+  /* Hide desktop theme toggle on mobile */
+  .sidebar .theme-toggle { display: none; }
 }
 
+/* ========== 小屏微调 ========== */
 @media (max-width: 420px) {
-  .pack-selector .pack-btn { padding: 6px 12px; font-size: 0.8rem; }
+  .main-area { padding: 8px 10px 90px; }
+
+  .pack-selector .pack-btn { padding: 6px 10px; font-size: 0.78rem; }
+  .mode-btn { padding: 5px 7px; font-size: 0.7rem; }
   .mode-selector { gap: 3px; }
-  .mode-btn { padding: 5px 8px; font-size: 0.72rem; gap: 2px; }
-  .mode-btn svg { width: 13px; height: 13px; }
 
-  .mastery-actions { gap: 5px; }
-  .mastery-actions .level-btn { padding: 8px 10px; font-size: 0.75rem; }
-  .nav-actions { gap: 5px; }
-  .prev-btn, .skip-btn { padding: 8px 14px; font-size: 0.78rem; }
+  .mastery-actions .level-btn { padding: 8px 12px; font-size: 0.76rem; }
+  .prev-btn, .skip-btn { padding: 10px 22px; font-size: 0.84rem; }
 
-  .word-text { font-size: 1.8rem; }
-  .phonetic-row { gap: 6px; }
-  .speak-btn { width: 28px; height: 28px; font-size: 0.82rem; }
-  .accent-btn { width: 28px; height: 28px; font-size: 0.7rem; }
-  .card-front, .card-back { padding: 20px 14px; min-height: 420px; }
-  .card-inner { min-height: 420px; }
-  .quiz-question { font-size: 1.2rem; }
-  .example-box { padding: 14px 16px; }
-  .notes-input { font-size: 0.82rem; padding: 8px 10px; }
-  .reset-btn { font-size: 0.7rem; padding: 2px 8px; }
+  .card-front { padding: 22px 14px 20px; min-height: 320px; }
+  .card-back { padding: 20px 14px 24px; min-height: 320px; }
+  .word-text { font-size: 1.7rem; }
+  .meaning-text { font-size: 1.15rem; }
+  .phonetic-text { font-size: 0.92rem; }
+  .speak-btn { width: 30px; height: 30px; font-size: 0.85rem; }
+  .accent-btn { width: 30px; height: 30px; font-size: 0.72rem; }
+  .flip-btn { padding: 8px 22px; font-size: 0.82rem; }
 
-  .search-box { padding: 8px 10px; }
-  .search-input { font-size: 0.82rem; }
-  .search-result-item { padding: 8px 10px; gap: 8px; }
-  .search-result-word { font-size: 0.84rem; min-width: 80px; }
-  .search-result-meaning { font-size: 0.76rem; }
+  .quiz-card, .spell-card { padding: 20px 14px; }
+  .quiz-question { font-size: 1.15rem; }
+  .quiz-option { padding: 12px 14px; font-size: 0.85rem; }
+  .spell-meaning { font-size: 1.1rem; }
+  .search-box { padding: 7px 10px; }
+  .search-input { font-size: 0.8rem; }
+  .search-result-item { padding: 8px 10px; gap: 6px; }
+  .search-result-word { font-size: 0.82rem; min-width: 70px; }
+  .search-result-meaning { font-size: 0.74rem; }
 }
