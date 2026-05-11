@@ -884,8 +884,38 @@ body {
   .speak-btn { width: 32px; height: 32px; font-size: 0.9rem; }
   .accent-btn { width: 32px; height: 32px; font-size: 0.78rem; }
   .meaning-text { font-size: 1.3rem; }
-  .card-front, .card-back { padding: 24px 18px 32px; }
-  .card-inner { min-height: 480px; }
+
+  /* 移动端：放弃 3D 翻转，改用简单切换 */
+  .card-inner {
+    position: relative;
+    width: 100%;
+    min-height: 480px;
+    transform-style: flat;
+    transition: none;
+  }
+  .card-inner.flipped { transform: none; }
+  .card-front, .card-back {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    min-height: 480px;
+    padding: 24px 18px 32px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    background: var(--card-bg);
+    backface-visibility: visible;
+    transform: none !important;
+    transition: opacity 0.3s ease;
+  }
+  .card-front { display: flex; }
+  .card-back { display: none; }
+  .card-inner.flipped .card-front { display: none; }
+  .card-inner.flipped .card-back { display: flex; }
+  .card-inner.flipped .card-front,
+  .card-inner:not(.flipped) .card-back { opacity: 0; pointer-events: none; }
+  .card-inner.flipped .card-back,
+  .card-inner:not(.flipped) .card-front { opacity: 1; pointer-events: auto; }
 
   .quiz-options { grid-template-columns: 1fr; }
   .quiz-question { font-size: 1.4rem; }
@@ -911,8 +941,8 @@ body {
   .phonetic-row { gap: 6px; }
   .speak-btn { width: 28px; height: 28px; font-size: 0.82rem; }
   .accent-btn { width: 28px; height: 28px; font-size: 0.7rem; }
-  .card-front, .card-back { padding: 20px 14px; }
-  .card-inner { min-height: 400px; }
+  .card-front, .card-back { padding: 20px 14px; min-height: 420px; }
+  .card-inner { min-height: 420px; }
   .quiz-question { font-size: 1.2rem; }
   .example-box { padding: 14px 16px; }
   .notes-input { font-size: 0.82rem; padding: 8px 10px; }
