@@ -537,7 +537,8 @@ function setAccent(accent) {
 
 function getEnglishVoice() {
   if (typeof speechSynthesis === 'undefined') return null;
-  const voices = speechSynthesis.getVoices();
+  // 优先用缓存，否则实时获取
+  const voices = cachedVoices.length > 0 ? cachedVoices : speechSynthesis.getVoices();
   const accent = getAccent();
   const preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
 
@@ -545,28 +546,34 @@ function getEnglishVoice() {
   if (!voice) voice = voices.find(v => v.lang.startsWith(preferLang.substring(0, 4)) && v.localService);
   if (!voice) voice = voices.find(v => v.lang.startsWith('en-') && v.localService);
   if (!voice) voice = voices.find(v => v.lang.startsWith('en-'));
-  if (!voice) voice = voices[0];
+  if (!voice && voices.length > 0) voice = voices[0];
 
   return voice || null;
 }
 
 function speakWord(word) {
   if (typeof speechSynthesis === 'undefined') return;
-  speechSynthesis.cancel();
   const btn = $('#speak-btn');
   if (!btn) return;
-  btn.classList.add('speaking');
+
+  speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(word);
   utter.voice = getEnglishVoice();
   utter.lang = getAccent() === 'uk' ? 'en-GB' : 'en-US';
   utter.rate = 0.85;
   utter.pitch = 1;
+  utter.volume = 1;
 
+  utter.onstart = () => btn.classList.add('speaking');
   utter.onend = () => btn.classList.remove('speaking');
   utter.onerror = () => btn.classList.remove('speaking');
 
-  speechSynthesis.speak(utter);
+  // iOS Safari 有时需要短暂延迟
+  setTimeout(() => {
+    btn.classList.add('speaking');
+    speechSynthesis.speak(utter);
+  }, 50);
 }
 
 function toggleAccent() {
@@ -578,9 +585,13 @@ function toggleAccent() {
   }
 }
 
-/* 预加载语音列表（部分浏览器异步获取） */
+/* 预加载语音列表（移动端异步加载，需监听事件） */
+let cachedVoices = [];
 if (typeof speechSynthesis !== 'undefined') {
-  speechSynthesis.getVoices();
+  cachedVoices = speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => {
+    cachedVoices = speechSynthesis.getVoices();
+  };
 }
 
 /* ========== 搜索功能 ========== */
