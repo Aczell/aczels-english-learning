@@ -532,12 +532,10 @@ let cachedVoices = [];
 
 if (speechAvailable) {
   cachedVoices = speechSynthesis.getVoices();
-  // 移动端语音列表通常异步加载，首次 getVoices() 返回空数组
-  if (cachedVoices.length === 0) {
-    speechSynthesis.onvoiceschanged = () => {
-      cachedVoices = speechSynthesis.getVoices();
-    };
-  }
+  // 始终注册 onvoiceschanged：Chrome/Firefox/Safari 均可能异步加载语音列表
+  speechSynthesis.onvoiceschanged = function() {
+    cachedVoices = speechSynthesis.getVoices();
+  };
 }
 
 function getAccent() {
@@ -553,32 +551,43 @@ function setAccent(accent) {
 function getEnglishVoice() {
   if (!speechAvailable) return null;
   var voices = cachedVoices.length > 0 ? cachedVoices : speechSynthesis.getVoices();
+  if (voices.length === 0) return null;
+
   var accent = getAccent();
   var preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
 
-  // 优先级：精确匹配 local → 同语系 local → 任意英文 local → 任意英文 → 第一个可用 → null
+  // 优先级：精确匹配 local → 同语系 local → 精确匹配 (含远程) → 同语系 → 第一个可用
   var voice = voices.find(function(v) { return v.lang === preferLang && v.localService; });
   if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-' && v.localService; });
+  if (!voice) voice = voices.find(function(v) { return v.lang === preferLang; });
   if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-'; });
-  if (!voice && voices.length > 0) voice = voices[0];
+  if (!voice) voice = voices[0];
 
-  return voice || null;
+  return voice;
 }
 
-// 预热语音引擎
-// iOS Safari：必须由用户手势直接触发首次 speak() 才能激活 AudioSession
-// Android Chrome：部分设备首次 speak() 无声，预热可缓解
+// 预热：首次用户交互时发送一个无声 utterance，激活浏览器的 AudioSession
+// iOS Safari 要求首次 speak() 必须在用户手势的同步调用链中，否则静默拒绝
 function unlockSpeech() {
   if (speechUnlocked || !speechAvailable) return;
   speechUnlocked = true;
   try {
     var dummy = new SpeechSynthesisUtterance('');
     dummy.volume = 0;
-    // Android Chrome 引擎卡住修复：pause+resume 解除阻塞状态
-    speechSynthesis.pause();
-    speechSynthesis.resume();
     speechSynthesis.speak(dummy);
-  } catch (e) { /* 静默 */ }
+  } catch (e) {}
+}
+
+// 创建 utterance 的工厂函数，统一配置属性
+function createUtterance(word) {
+  var utter = new SpeechSynthesisUtterance(word);
+  var voice = getEnglishVoice();
+  if (voice) utter.voice = voice;
+  utter.lang = getAccent() === 'uk' ? 'en-GB' : 'en-US';
+  utter.rate = 0.85;
+  utter.pitch = 1;
+  utter.volume = 1;
+  return utter;
 }
 
 // 核心发音函数
@@ -590,80 +599,74 @@ function speakWord(word) {
 
   var synth = speechSynthesis;
 
-  // 取消当前语音
-  synth.cancel();
-
-  // Android Chrome 引擎卡住修复：pause+resume 重置引擎状态
-  // 这是 Chromium 多年未修复的 bug，引擎会在某些情况下永久 pending
-  synth.pause();
-  synth.resume();
-
-  var utter = new SpeechSynthesisUtterance(word);
-  var voice = getEnglishVoice();
-  if (voice) utter.voice = voice;
-  utter.lang = getAccent() === 'uk' ? 'en-GB' : 'en-US';
-  utter.rate = 0.85;
-  utter.pitch = 1;
-  utter.volume = 1;
-
-  var started = false;
-  var finished = false;
-  var timers = { safety: null, retry: null };
-
-  function clearTimers() {
-    if (timers.safety) { clearTimeout(timers.safety); timers.safety = null; }
-    if (timers.retry) { clearTimeout(timers.retry); timers.retry = null; }
+  // 仅当有语音在播放或排队时才取消，避免无谓的 cancel 触发异步状态变更
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
   }
 
-  function resetUI() {
+  var utter = createUtterance(word);
+  var finished = false;
+  var safetyTimer = null;
+  var retryTimer = null;
+
+  function clearTimers() {
+    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+  }
+
+  function cleanup() {
+    if (finished) return;
     finished = true;
     clearTimers();
     btn.classList.remove('speaking');
   }
 
   utter.onstart = function() {
-    started = true;
-    // 启动后清除重试计时器
-    if (timers.retry) { clearTimeout(timers.retry); timers.retry = null; }
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
     btn.classList.add('speaking');
   };
 
-  utter.onend = resetUI;
+  utter.onend = cleanup;
 
   utter.onerror = function(e) {
-    resetUI();
-    // 'canceled' / 'interrupted' 是用户主动操作触发的，不需要报错
+    cleanup();
     if (e.error !== 'canceled' && e.error !== 'interrupted') {
       flashSpeakBtn();
     }
   };
 
-  // 安全超时：防止部分浏览器（华为/小米等国产浏览器）永不触发 onend/onerror
-  // 以最长单词发音时间约 2 秒 + 余量 = 4 秒为上限
-  timers.safety = setTimeout(function() {
+  // Chromium bug workaround: 引擎有时会静默卡住，onstart 永不触发
+  // 800ms 后若未启动，cancel 并用全新 utterance 重试一次
+  retryTimer = setTimeout(function() {
+    if (!finished && !btn.classList.contains('speaking')) {
+      synth.cancel();
+      var utter2 = createUtterance(word);
+      utter2.onstart = function() { btn.classList.add('speaking'); };
+      utter2.onend = cleanup;
+      utter2.onerror = function(e) {
+        cleanup();
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+          flashSpeakBtn();
+        }
+      };
+      try { synth.speak(utter2); } catch (e2) { cleanup(); }
+    }
+  }, 800);
+
+  // 安全超时 5 秒：防止部分浏览器永不触发 onend
+  safetyTimer = setTimeout(function() {
     if (!finished) {
       synth.cancel();
-      btn.classList.remove('speaking');
+      cleanup();
     }
-  }, 4000);
+  }, 5000);
 
-  // 安卓重试机制：600ms 后若语音仍未启动，说明引擎卡住，取消后重试
-  timers.retry = setTimeout(function() {
-    if (!started && !finished) {
-      synth.cancel();
-      synth.pause();
-      synth.resume();
-      try { synth.speak(utter); } catch (e) {}
-    }
-  }, 600);
-
-  // 关键：在用户手势的同步调用链中立即 speak()
-  // 绝不使用 setTimeout 包裹，否则 iOS Safari 会静默拒绝
+  // 必须在用户手势同步链中立即 speak()，不能包 setTimeout，否则 iOS Safari 拒绝
   btn.classList.add('speaking');
   try {
     synth.speak(utter);
   } catch (e) {
-    resetUI();
+    cleanup();
     flashSpeakBtn();
   }
 }
