@@ -525,18 +525,38 @@ function saveQuizStats(isCorrect) {
   updateProgress();
 }
 
-/* ========== 发音功能 ========== */
-let speechUnlocked = false;
+/* ========== 发音功能（双引擎：Web Speech API + Audio fallback） ========== */
 let speechAvailable = typeof speechSynthesis !== 'undefined';
+let speechBroken = false;       // true = speechSynthesis 已确认不可用
+let englishVoiceExists = false; // 是否有英文语音
 let cachedVoices = [];
 
-if (speechAvailable) {
+function updateVoiceCache() {
+  if (!speechAvailable) return;
   cachedVoices = speechSynthesis.getVoices();
-  // 始终注册 onvoiceschanged：Chrome/Firefox/Safari 均可能异步加载语音列表
-  speechSynthesis.onvoiceschanged = function() {
-    cachedVoices = speechSynthesis.getVoices();
-  };
+  englishVoiceExists = cachedVoices.some(function(v) { return v.lang.slice(0, 3) === 'en-'; });
 }
+
+if (speechAvailable) {
+  updateVoiceCache();
+  speechSynthesis.onvoiceschanged = updateVoiceCache;
+}
+
+// 首次用户触摸/点击时发送无声utterance激活AudioSession（iOS要求）
+(function() {
+  var unlocked = false;
+  function unlock() {
+    if (unlocked || !speechAvailable) return;
+    unlocked = true;
+    try {
+      var d = new SpeechSynthesisUtterance('');
+      d.volume = 0;
+      speechSynthesis.speak(d);
+    } catch (e) {}
+  }
+  document.addEventListener('touchstart', unlock, { once: true, passive: true });
+  document.addEventListener('click', unlock, { once: true, passive: true });
+})();
 
 function getAccent() {
   return localStorage.getItem('englearn_accent') || 'us';
@@ -549,37 +569,50 @@ function setAccent(accent) {
 }
 
 function getEnglishVoice() {
-  if (!speechAvailable) return null;
-  var voices = cachedVoices.length > 0 ? cachedVoices : speechSynthesis.getVoices();
-  if (voices.length === 0) return null;
-
+  if (!speechAvailable || cachedVoices.length === 0) return null;
   var accent = getAccent();
   var preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
-
-  // 优先级：精确匹配 local → 同语系 local → 精确匹配 (含远程) → 同语系 → 第一个可用
-  var voice = voices.find(function(v) { return v.lang === preferLang && v.localService; });
-  if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-' && v.localService; });
-  if (!voice) voice = voices.find(function(v) { return v.lang === preferLang; });
-  if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-'; });
-  if (!voice) voice = voices[0];
-
-  return voice;
+  var voice = cachedVoices.find(function(v) { return v.lang === preferLang && v.localService; });
+  if (!voice) voice = cachedVoices.find(function(v) { return v.lang.slice(0, 3) === 'en-' && v.localService; });
+  if (!voice) voice = cachedVoices.find(function(v) { return v.lang === preferLang; });
+  if (!voice) voice = cachedVoices.find(function(v) { return v.lang.slice(0, 3) === 'en-'; });
+  return voice || null;
 }
 
-// 预热：首次用户交互时发送一个无声 utterance，激活浏览器的 AudioSession
-// iOS Safari 要求首次 speak() 必须在用户手势的同步调用链中，否则静默拒绝
-function unlockSpeech() {
-  if (speechUnlocked || !speechAvailable) return;
-  speechUnlocked = true;
-  try {
-    var dummy = new SpeechSynthesisUtterance('');
-    dummy.volume = 0;
-    speechSynthesis.speak(dummy);
-  } catch (e) {}
+// ---- Audio fallback：有道词典TTS（国内可访问） ----
+function speakViaAudio(word) {
+  var accent = getAccent();
+  var type = accent === 'uk' ? 1 : 0; // 0=美 1=英
+  var url = 'https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(word) + '&type=' + type;
+  var btn = $('#speak-btn');
+  if (btn) btn.classList.add('speaking');
+
+  var audio = new Audio(url);
+  audio.onended = function() { if (btn) btn.classList.remove('speaking'); };
+  audio.onerror = function() {
+    if (btn) btn.classList.remove('speaking');
+    flashSpeakBtn();
+  };
+  audio.play().catch(function() {
+    if (btn) btn.classList.remove('speaking');
+    flashSpeakBtn();
+  });
 }
 
-// 创建 utterance 的工厂函数，统一配置属性
-function createUtterance(word) {
+// ---- 核心发音 ----
+function speakWord(word) {
+  var btn = $('#speak-btn');
+  if (!btn) return;
+
+  // 语音合成已确认失效或没有英文语音 → 直接用 Audio
+  if (speechBroken || !speechAvailable || !englishVoiceExists) {
+    speakViaAudio(word);
+    return;
+  }
+
+  var synth = speechSynthesis;
+  if (synth.speaking || synth.pending) synth.cancel();
+
   var utter = new SpeechSynthesisUtterance(word);
   var voice = getEnglishVoice();
   if (voice) utter.voice = voice;
@@ -587,87 +620,53 @@ function createUtterance(word) {
   utter.rate = 0.85;
   utter.pitch = 1;
   utter.volume = 1;
-  return utter;
-}
 
-// 核心发音函数
-function speakWord(word) {
-  if (!speechAvailable) { flashSpeakBtn(); return; }
-
-  var btn = $('#speak-btn');
-  if (!btn) return;
-
-  var synth = speechSynthesis;
-
-  // 仅当有语音在播放或排队时才取消，避免无谓的 cancel 触发异步状态变更
-  if (synth.speaking || synth.pending) {
-    synth.cancel();
-  }
-
-  var utter = createUtterance(word);
   var finished = false;
   var safetyTimer = null;
-  var retryTimer = null;
-
-  function clearTimers() {
-    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
-    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
-  }
 
   function cleanup() {
     if (finished) return;
     finished = true;
-    clearTimers();
-    btn.classList.remove('speaking');
+    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+    if (btn) btn.classList.remove('speaking');
   }
 
   utter.onstart = function() {
-    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
-    btn.classList.add('speaking');
+    if (btn) btn.classList.add('speaking');
+    if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+    // 重置安全超时（正常单词发音 < 3s）
+    safetyTimer = setTimeout(function() {
+      if (!finished) { synth.cancel(); cleanup(); }
+    }, 4000);
   };
 
   utter.onend = cleanup;
 
   utter.onerror = function(e) {
+    // canceled/interrupted 不算引擎故障
+    if (e.error === 'canceled' || e.error === 'interrupted') { cleanup(); return; }
     cleanup();
-    if (e.error !== 'canceled' && e.error !== 'interrupted') {
-      flashSpeakBtn();
-    }
+    // 引擎报错 → 后续全部走 Audio fallback
+    speechBroken = true;
+    speakViaAudio(word);
   };
 
-  // Chromium bug workaround: 引擎有时会静默卡住，onstart 永不触发
-  // 800ms 后若未启动，cancel 并用全新 utterance 重试一次
-  retryTimer = setTimeout(function() {
-    if (!finished && !btn.classList.contains('speaking')) {
-      synth.cancel();
-      var utter2 = createUtterance(word);
-      utter2.onstart = function() { btn.classList.add('speaking'); };
-      utter2.onend = cleanup;
-      utter2.onerror = function(e) {
-        cleanup();
-        if (e.error !== 'canceled' && e.error !== 'interrupted') {
-          flashSpeakBtn();
-        }
-      };
-      try { synth.speak(utter2); } catch (e2) { cleanup(); }
-    }
-  }, 800);
-
-  // 安全超时 5 秒：防止部分浏览器永不触发 onend
+  // 2s 后 onstart 仍未触发 → 引擎卡死，切 Audio
   safetyTimer = setTimeout(function() {
     if (!finished) {
       synth.cancel();
       cleanup();
+      speechBroken = true;
+      speakViaAudio(word);
     }
-  }, 5000);
+  }, 2000);
 
-  // 必须在用户手势同步链中立即 speak()，不能包 setTimeout，否则 iOS Safari 拒绝
-  btn.classList.add('speaking');
   try {
     synth.speak(utter);
   } catch (e) {
     cleanup();
-    flashSpeakBtn();
+    speechBroken = true;
+    speakViaAudio(word);
   }
 }
 
@@ -886,7 +885,6 @@ function bindEvents() {
   // 发音按钮
   $('#speak-btn').addEventListener('click', () => {
     if (state.wordPool.length === 0) return;
-    unlockSpeech();
     const w = state.wordPool[state.currentIndex];
     if (w) speakWord(w.w);
   });
@@ -967,7 +965,6 @@ function bindEvents() {
     if (e.key === 'ArrowLeft') { e.preventDefault(); prevWord(); }
     if (e.key === 'ArrowRight') { e.preventDefault(); nextWord(); }
     if (e.key === 's' && state.wordPool.length > 0) {
-      unlockSpeech();
       const w = state.wordPool[state.currentIndex];
       if (w) speakWord(w.w);
     }
@@ -995,13 +992,7 @@ function init() {
   loadProgress();
   setAccent(getAccent());
 
-  // 浏览器不支持语音合成时隐藏发音相关按钮
-  if (!speechAvailable) {
-    var speakBtn = $('#speak-btn');
-    var accentBtn = $('#accent-btn');
-    if (speakBtn) speakBtn.classList.add('hidden');
-    if (accentBtn) accentBtn.classList.add('hidden');
-  }
+  // 有 Audio fallback 兜底，不再隐藏发音按钮
 
   const data = getData();
   if (state.currentCat !== 'all' && !data[state.currentCat]) {
