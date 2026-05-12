@@ -526,72 +526,161 @@ function saveQuizStats(isCorrect) {
 }
 
 /* ========== 发音功能 ========== */
+let speechUnlocked = false;
+let speechAvailable = typeof speechSynthesis !== 'undefined';
+let cachedVoices = [];
+
+if (speechAvailable) {
+  cachedVoices = speechSynthesis.getVoices();
+  // 移动端语音列表通常异步加载，首次 getVoices() 返回空数组
+  if (cachedVoices.length === 0) {
+    speechSynthesis.onvoiceschanged = () => {
+      cachedVoices = speechSynthesis.getVoices();
+    };
+  }
+}
+
 function getAccent() {
   return localStorage.getItem('englearn_accent') || 'us';
 }
 
 function setAccent(accent) {
   localStorage.setItem('englearn_accent', accent);
-  $('#accent-btn').textContent = accent === 'uk' ? '🇬🇧' : '🇺🇸';
+  var btn = $('#accent-btn');
+  if (btn) btn.textContent = accent === 'uk' ? '🇬🇧' : '🇺🇸';
 }
 
 function getEnglishVoice() {
-  if (typeof speechSynthesis === 'undefined') return null;
-  // 优先用缓存，否则实时获取
-  const voices = cachedVoices.length > 0 ? cachedVoices : speechSynthesis.getVoices();
-  const accent = getAccent();
-  const preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
+  if (!speechAvailable) return null;
+  var voices = cachedVoices.length > 0 ? cachedVoices : speechSynthesis.getVoices();
+  var accent = getAccent();
+  var preferLang = accent === 'uk' ? 'en-GB' : 'en-US';
 
-  let voice = voices.find(v => v.lang === preferLang && v.localService);
-  if (!voice) voice = voices.find(v => v.lang.startsWith(preferLang.substring(0, 4)) && v.localService);
-  if (!voice) voice = voices.find(v => v.lang.startsWith('en-') && v.localService);
-  if (!voice) voice = voices.find(v => v.lang.startsWith('en-'));
+  // 优先级：精确匹配 local → 同语系 local → 任意英文 local → 任意英文 → 第一个可用 → null
+  var voice = voices.find(function(v) { return v.lang === preferLang && v.localService; });
+  if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-' && v.localService; });
+  if (!voice) voice = voices.find(function(v) { return v.lang.slice(0, 3) === 'en-'; });
   if (!voice && voices.length > 0) voice = voices[0];
 
   return voice || null;
 }
 
+// 预热语音引擎
+// iOS Safari：必须由用户手势直接触发首次 speak() 才能激活 AudioSession
+// Android Chrome：部分设备首次 speak() 无声，预热可缓解
+function unlockSpeech() {
+  if (speechUnlocked || !speechAvailable) return;
+  speechUnlocked = true;
+  try {
+    var dummy = new SpeechSynthesisUtterance('');
+    dummy.volume = 0;
+    // Android Chrome 引擎卡住修复：pause+resume 解除阻塞状态
+    speechSynthesis.pause();
+    speechSynthesis.resume();
+    speechSynthesis.speak(dummy);
+  } catch (e) { /* 静默 */ }
+}
+
+// 核心发音函数
 function speakWord(word) {
-  if (typeof speechSynthesis === 'undefined') return;
-  const btn = $('#speak-btn');
+  if (!speechAvailable) { flashSpeakBtn(); return; }
+
+  var btn = $('#speak-btn');
   if (!btn) return;
 
-  speechSynthesis.cancel();
+  var synth = speechSynthesis;
 
-  const utter = new SpeechSynthesisUtterance(word);
-  utter.voice = getEnglishVoice();
+  // 取消当前语音
+  synth.cancel();
+
+  // Android Chrome 引擎卡住修复：pause+resume 重置引擎状态
+  // 这是 Chromium 多年未修复的 bug，引擎会在某些情况下永久 pending
+  synth.pause();
+  synth.resume();
+
+  var utter = new SpeechSynthesisUtterance(word);
+  var voice = getEnglishVoice();
+  if (voice) utter.voice = voice;
   utter.lang = getAccent() === 'uk' ? 'en-GB' : 'en-US';
   utter.rate = 0.85;
   utter.pitch = 1;
   utter.volume = 1;
 
-  utter.onstart = () => btn.classList.add('speaking');
-  utter.onend = () => btn.classList.remove('speaking');
-  utter.onerror = () => btn.classList.remove('speaking');
+  var started = false;
+  var finished = false;
+  var timers = { safety: null, retry: null };
 
-  // iOS Safari 有时需要短暂延迟
-  setTimeout(() => {
+  function clearTimers() {
+    if (timers.safety) { clearTimeout(timers.safety); timers.safety = null; }
+    if (timers.retry) { clearTimeout(timers.retry); timers.retry = null; }
+  }
+
+  function resetUI() {
+    finished = true;
+    clearTimers();
+    btn.classList.remove('speaking');
+  }
+
+  utter.onstart = function() {
+    started = true;
+    // 启动后清除重试计时器
+    if (timers.retry) { clearTimeout(timers.retry); timers.retry = null; }
     btn.classList.add('speaking');
-    speechSynthesis.speak(utter);
-  }, 50);
+  };
+
+  utter.onend = resetUI;
+
+  utter.onerror = function(e) {
+    resetUI();
+    // 'canceled' / 'interrupted' 是用户主动操作触发的，不需要报错
+    if (e.error !== 'canceled' && e.error !== 'interrupted') {
+      flashSpeakBtn();
+    }
+  };
+
+  // 安全超时：防止部分浏览器（华为/小米等国产浏览器）永不触发 onend/onerror
+  // 以最长单词发音时间约 2 秒 + 余量 = 4 秒为上限
+  timers.safety = setTimeout(function() {
+    if (!finished) {
+      synth.cancel();
+      btn.classList.remove('speaking');
+    }
+  }, 4000);
+
+  // 安卓重试机制：600ms 后若语音仍未启动，说明引擎卡住，取消后重试
+  timers.retry = setTimeout(function() {
+    if (!started && !finished) {
+      synth.cancel();
+      synth.pause();
+      synth.resume();
+      try { synth.speak(utter); } catch (e) {}
+    }
+  }, 600);
+
+  // 关键：在用户手势的同步调用链中立即 speak()
+  // 绝不使用 setTimeout 包裹，否则 iOS Safari 会静默拒绝
+  btn.classList.add('speaking');
+  try {
+    synth.speak(utter);
+  } catch (e) {
+    resetUI();
+    flashSpeakBtn();
+  }
+}
+
+function flashSpeakBtn() {
+  var btn = $('#speak-btn');
+  if (!btn) return;
+  btn.style.opacity = '0.4';
+  setTimeout(function() { btn.style.opacity = ''; }, 400);
 }
 
 function toggleAccent() {
   setAccent(getAccent() === 'uk' ? 'us' : 'uk');
-  // 如果正在学习模式，立即用新口音朗读当前单词
   if (state.currentMode === 'learn' && state.wordPool.length > 0) {
-    const w = state.wordPool[state.currentIndex];
+    var w = state.wordPool[state.currentIndex];
     if (w) speakWord(w.w);
   }
-}
-
-/* 预加载语音列表（移动端异步加载，需监听事件） */
-let cachedVoices = [];
-if (typeof speechSynthesis !== 'undefined') {
-  cachedVoices = speechSynthesis.getVoices();
-  speechSynthesis.onvoiceschanged = () => {
-    cachedVoices = speechSynthesis.getVoices();
-  };
 }
 
 /* ========== 搜索功能 ========== */
@@ -794,6 +883,7 @@ function bindEvents() {
   // 发音按钮
   $('#speak-btn').addEventListener('click', () => {
     if (state.wordPool.length === 0) return;
+    unlockSpeech();
     const w = state.wordPool[state.currentIndex];
     if (w) speakWord(w.w);
   });
@@ -874,6 +964,7 @@ function bindEvents() {
     if (e.key === 'ArrowLeft') { e.preventDefault(); prevWord(); }
     if (e.key === 'ArrowRight') { e.preventDefault(); nextWord(); }
     if (e.key === 's' && state.wordPool.length > 0) {
+      unlockSpeech();
       const w = state.wordPool[state.currentIndex];
       if (w) speakWord(w.w);
     }
@@ -900,6 +991,14 @@ function init() {
   applyTheme(getTheme());
   loadProgress();
   setAccent(getAccent());
+
+  // 浏览器不支持语音合成时隐藏发音相关按钮
+  if (!speechAvailable) {
+    var speakBtn = $('#speak-btn');
+    var accentBtn = $('#accent-btn');
+    if (speakBtn) speakBtn.classList.add('hidden');
+    if (accentBtn) accentBtn.classList.add('hidden');
+  }
 
   const data = getData();
   if (state.currentCat !== 'all' && !data[state.currentCat]) {
