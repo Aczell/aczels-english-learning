@@ -500,14 +500,16 @@ body {
   min-height: 460px;
   transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 .card-inner.flipped { transform: rotateY(180deg); }
 
 .card-front, .card-back {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -812,9 +814,11 @@ body {
 
 /* Overlay */
 .overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: var(--overlay-bg);
   z-index: 99;
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
 
@@ -838,7 +842,7 @@ body {
   /* ---- 基础布局 ---- */
   .mobile-only { display: flex !important; }
   .layout { display: block; }
-  .main-area { margin: 0; max-width: 100%; padding: 12px 12px 100px; }
+  .main-area { margin: 0; max-width: 100%; padding: 12px 12px calc(100px + env(safe-area-inset-bottom, 0px)); }
 
   /* ---- 侧边栏：点击时从左侧滑入 ---- */
   .sidebar {
@@ -856,7 +860,8 @@ body {
 
   /* ---- 遮罩 ---- */
   .overlay {
-    position: fixed; inset: 0;
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
     background: rgba(0,0,0,0.35);
     z-index: 150;
   }
@@ -935,28 +940,28 @@ body {
 
   .card-inner {
     position: relative; width: 100%; min-height: auto;
-    transform-style: flat; transition: none;
+    transform-style: flat; -webkit-transform-style: flat; transition: none;
   }
-  .card-inner.flipped { transform: none; }
+  .card-inner.flipped { transform: none; -webkit-transform: none; }
 
   /* 正面始终显示，翻转时才隐藏 */
   .card-front {
-    position: relative; inset: auto; width: 100%;
+    position: relative; top: auto; right: auto; bottom: auto; left: auto; width: 100%;
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; padding: 28px 18px 24px; min-height: 360px;
     border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
     border: 1px solid var(--border-light); background: var(--card-bg);
-    backface-visibility: visible; transform: none;
+    backface-visibility: visible; -webkit-backface-visibility: visible; transform: none;
   }
 
   /* 背面默认隐藏 */
   .card-back {
-    position: relative; inset: auto; width: 100%;
+    position: relative; top: auto; right: auto; bottom: auto; left: auto; width: 100%;
     display: none; flex-direction: column; align-items: center;
     justify-content: center; padding: 24px 18px 28px; min-height: 360px;
     border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
     border: 1px solid var(--border-light); background: var(--card-bg);
-    backface-visibility: visible; transform: none;
+    backface-visibility: visible; -webkit-backface-visibility: visible; transform: none;
   }
 
   /* 翻转状态：正面隐藏，背面显示 */
@@ -989,7 +994,9 @@ body {
 
   /* ---- 浮动主题按钮 ---- */
   .theme-toggle.mobile-only {
-    position: fixed; bottom: 20px; right: 20px;
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: calc(20px + env(safe-area-inset-right, 0px));
     width: 44px; height: 44px;
     border-radius: 50%; border: 1.5px solid var(--border);
     background: var(--card-bg); box-shadow: var(--shadow-md);
@@ -1004,7 +1011,7 @@ body {
 
 /* ========== 小屏微调 ========== */
 @media (max-width: 420px) {
-  .main-area { padding: 8px 10px 90px; }
+  .main-area { padding: 8px 10px calc(90px + env(safe-area-inset-bottom, 0px)); }
 
   .pack-selector .pack-btn { padding: 6px 10px; font-size: 0.78rem; }
   .mode-btn { padding: 5px 7px; font-size: 0.7rem; }

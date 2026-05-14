@@ -988,11 +988,27 @@ function toggleTheme() {
 
 /* ========== 初始化 ========== */
 function init() {
+  try {
+    _init();
+  } catch (e) {
+    // iOS Safari may fire DOMContentLoaded before CSSOM is ready;
+    // retry once on load event
+    window.addEventListener('load', function() {
+      try { _init(); } catch (e2) { /* page should still render static HTML */ }
+    }, { once: true });
+  }
+}
+
+function _init() {
   applyTheme(getTheme());
   loadProgress();
   setAccent(getAccent());
 
-  // 有 Audio fallback 兜底，不再隐藏发音按钮
+  // 验证数据文件是否加载成功
+  if (typeof cet6Data === 'undefined' || typeof ieltsData === 'undefined') {
+    console.warn('词汇数据文件未加载，稍后重试');
+    return;
+  }
 
   const data = getData();
   if (state.currentCat !== 'all' && !data[state.currentCat]) {
@@ -1006,11 +1022,12 @@ function init() {
   refreshPool();
   updateProgress();
   // 首次加载不播放入场动画
-  $('#learn-mode').classList.add('no-anim');
+  var learnMode = $('#learn-mode');
+  if (learnMode) learnMode.classList.add('no-anim');
   switchMode('learn');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      $('#learn-mode').classList.remove('no-anim');
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      if (learnMode) learnMode.classList.remove('no-anim');
     });
   });
   bindEvents();
