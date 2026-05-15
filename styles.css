@@ -64,7 +64,7 @@
   --overlay-bg:    rgba(0,0,0,0.5);
 }
 
-html { font-size: 16px; }
+html { font-size: 16px; color-scheme: light dark; }
 
 body {
   font-family: var(--font-sans);
@@ -75,6 +75,13 @@ body {
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s, color 0.3s;
 }
+
+/* Scrollbar — 跟随主题色，深色模式下不突兀 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+.sidebar { scrollbar-color: var(--border) transparent; }
 
 /* ========== Layout ========== */
 .layout {
@@ -191,6 +198,52 @@ body {
   font-size: 0.84rem;
   color: var(--text-secondary);
   transition: all var(--transition);
+}
+
+/* 年级折叠组 */
+.grade-group { margin-bottom: 2px; }
+
+.grade-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all var(--transition);
+}
+.grade-header:hover { background: var(--border-light); border-color: var(--dusty-purple-light); }
+
+.grade-arrow {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  transition: transform var(--transition);
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.grade-units { padding-left: 16px; margin: 2px 0 6px; }
+.grade-units.hidden { display: none; }
+
+.grade-units .cat-btn-sidebar { font-size: 0.8rem; padding: 6px 12px; }
+
+/* 移动端年级分隔 */
+.cat-chip-divider {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  user-select: none;
 }
 
 .cat-btn:hover, .cat-btn-sidebar:hover { background: var(--border-light); }

@@ -28,12 +28,7 @@
       <!-- Pack Selector -->
       <div class="sidebar-section">
         <p class="sidebar-label">词汇包</p>
-        <button class="pack-btn active" data-pack="cet6">
-          <span class="pack-icon">📘</span> 六级词汇 CET-6
-        </button>
-        <button class="pack-btn" data-pack="ielts">
-          <span class="pack-icon">📙</span> 雅思词汇 IELTS
-        </button>
+        <div id="pack-list-desktop"></div>
       </div>
 
       <!-- Category Directory -->
@@ -46,7 +41,7 @@
         <nav class="cat-list" id="cat-list"></nav>
       </div>
 
-      <p class="sidebar-version">v1.2.2</p>
+      <p class="sidebar-version">v1.2.3</p>
     </aside>
 
     <!-- Main -->
@@ -60,14 +55,7 @@
       </header>
 
       <!-- Mobile pack tabs -->
-      <nav class="pack-selector mobile-only">
-        <button class="pack-btn active" data-pack="cet6">
-          <span class="pack-icon">📘</span><span>六级</span>
-        </button>
-        <button class="pack-btn" data-pack="ielts">
-          <span class="pack-icon">📙</span><span>雅思</span>
-        </button>
-      </nav>
+      <nav class="pack-selector mobile-only" id="pack-list-mobile"></nav>
 
       <!-- Mobile category scroll -->
       <nav class="cat-scroll mobile-only" id="cat-scroll"></nav>
@@ -212,6 +200,7 @@
 
   <script src="data/cet6.js"></script>
   <script src="data/ielts.js"></script>
+  <script src="data/primary.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

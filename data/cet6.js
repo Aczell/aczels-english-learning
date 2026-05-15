@@ -79,6 +79,15 @@ const cet6Data = {
       { w: "tutor", p: "/ˈtjuːtə/", m: "n. 导师；家庭教师 v. 辅导", e: "She tutors high school students in math on weekends.", ez: "她周末辅导高中生的数学。" },
       { w: "undergraduate", p: "/ˌʌndəˈɡrædʒuət/", m: "n. 本科生", e: "Undergraduate research opportunities are available this summer.", ez: "今年夏天有本科生科研机会。" },
       { w: "vocational", p: "/vəʊˈkeɪʃənəl/", m: "adj. 职业的", e: "Vocational training prepares students for specific careers.", ez: "职业培训让学生为特定职业做好准备。" },
+      { w: "assess", p: "/əˈses/", m: "v. 评估；评定", e: "Teachers assess students' progress through various methods.", ez: "老师通过各种方法评估学生的进步。" },
+      { w: "clarify", p: "/ˈklærɪfaɪ/", m: "v. 澄清；阐明", e: "Could you clarify what you mean by that term?", ez: "你能澄清一下那个术语的意思吗？" },
+      { w: "demonstrate", p: "/ˈdemənstreɪt/", m: "v. 演示；证明；展示", e: "The experiment demonstrates how gravity affects plant growth.", ez: "这个实验演示了重力如何影响植物生长。" },
+      { w: "incorporate", p: "/ɪnˈkɔːpəreɪt/", m: "v. 包含；合并；纳入", e: "The course incorporates both theory and practical training.", ez: "这门课程融合了理论与实践训练。" },
+      { w: "methodology", p: "/ˌmeθəˈdɒlədʒi/", m: "n. 方法论；方法学", e: "The research methodology was carefully designed to eliminate bias.", ez: "研究方法论经过精心设计以消除偏见。" },
+      { w: "rationale", p: "/ˌræʃəˈnɑːl/", m: "n. 基本原理；逻辑依据", e: "The professor explained the rationale behind the grading rubric.", ez: "教授解释了评分标准背后的基本原理。" },
+      { w: "refine", p: "/rɪˈfaɪn/", m: "v. 改进；提炼；完善", e: "You should refine your thesis statement before submitting.", ez: "你应该在提交前完善你的论点陈述。" },
+      { w: "synthesize", p: "/ˈsɪnθɪsaɪz/", m: "v. 综合；合成", e: "The ability to synthesize information from multiple sources is crucial.", ez: "综合多个来源信息的能力至关重要。" },
+      { w: "verify", p: "/ˈverɪfaɪ/", m: "v. 验证；核实", e: "You should verify your references before citing them.", ez: "你应该在引用之前核实参考文献。" }
     ]
   },
   technology: {
@@ -145,6 +154,14 @@ const cet6Data = {
       { w: "vulnerability", p: "/ˌvʌlnərəˈbɪlɪti/", m: "n. 脆弱性；漏洞", e: "The update patches several critical security vulnerabilities.", ez: "这次更新修复了几个关键的安全漏洞。" },
       { w: "wearable", p: "/ˈweərəbl/", m: "adj. 可穿戴的 n. 可穿戴设备", e: "Wearable devices track your daily activity and sleep patterns.", ez: "可穿戴设备追踪你的日常活动和睡眠模式。" },
       { w: "wireless", p: "/ˈwaɪələs/", m: "adj. 无线的", e: "Wireless charging has become standard for many phones.", ez: "无线充电已成为许多手机的标准配置。" },
+      { w: "blockchain", p: "/ˈblɒktʃeɪn/", m: "n. 区块链", e: "Blockchain technology is transforming the financial industry.", ez: "区块链技术正在改变金融行业。" },
+      { w: "cybersecurity", p: "/ˌsaɪbəsɪˈkjʊərɪti/", m: "n. 网络安全", e: "Cybersecurity experts are in high demand across all industries.", ez: "各行各业对网络安全专家的需求都很高。" },
+      { w: "harness", p: "/ˈhɑːnɪs/", m: "v. 利用；治理", e: "We need to harness solar energy more efficiently.", ez: "我们需要更有效地利用太阳能。" },
+      { w: "obsolete", p: "/ˈɒbsəliːt/", m: "adj. 过时的；废弃的", e: "This technology became obsolete within just a few years.", ez: "这项技术在短短几年内就过时了。" },
+      { w: "quantum", p: "/ˈkwɒntəm/", m: "n. 量子 adj. 量子的", e: "Quantum computing could revolutionize data processing.", ez: "量子计算可能会彻底改变数据处理方式。" },
+      { w: "robust", p: "/rəʊˈbʌst/", m: "adj. 稳健的；坚固的；强健的", e: "The system needs a more robust security framework.", ez: "这个系统需要一个更稳健的安全框架。" },
+      { w: "upgrade", p: "/ʌpˈɡreɪd/", m: "v. 升级；提升 n. 升级", e: "You need to upgrade your software to the latest version.", ez: "你需要将软件升级到最新版本。" },
+      { w: "precision", p: "/prɪˈsɪʒən/", m: "n. 精确；精度 adj. 精密的", e: "The robot can perform surgery with incredible precision.", ez: "这台机器人能以惊人的精度进行手术。" }
     ]
   },
   economy: {
@@ -201,6 +218,12 @@ const cet6Data = {
       { w: "volatile", p: "/ˈvɒlətaɪl/", m: "adj. 不稳定的；易波动的", e: "Cryptocurrency markets are extremely volatile.", ez: "加密货币市场极其波动。" },
       { w: "wholesale", p: "/ˈhəʊlseɪl/", m: "n. & adj. 批发（的）", e: "Buying wholesale can significantly reduce your costs.", ez: "批量购买可以显著降低成本。" },
       { w: "yield", p: "/jiːld/", m: "v. 产生；屈服 n. 产量；收益", e: "The investment yielded a 15% annual return.", ez: "这项投资产生了15%的年回报率。" },
+      { w: "fluctuate", p: "/ˈflʌktʃueɪt/", m: "v. 波动；起伏", e: "Oil prices fluctuate significantly due to global events.", ez: "油价因全球事件而大幅波动。" },
+      { w: "incentive", p: "/ɪnˈsentɪv/", m: "n. 激励；刺激；奖励", e: "Tax incentives encourage companies to invest in research.", ez: "税收优惠鼓励企业投资研究。" },
+      { w: "monetary", p: "/ˈmʌnɪtəri/", m: "adj. 货币的；金融的", e: "The central bank adjusted its monetary policy to control inflation.", ez: "央行调整了货币政策以控制通货膨胀。" },
+      { w: "retail", p: "/ˈriːteɪl/", m: "n. 零售 v. 零售", e: "Online retail has grown dramatically in the past decade.", ez: "过去十年在线零售增长迅猛。" },
+      { w: "stimulate", p: "/ˈstɪmjʊleɪt/", m: "v. 刺激；促进；激励", e: "Lower interest rates can stimulate economic growth.", ez: "降低利率可以刺激经济增长。" },
+      { w: "transaction", p: "/trænˈzækʃən/", m: "n. 交易；业务", e: "All transactions are encrypted for your security.", ez: "所有交易都已加密以确保你的安全。" }
     ]
   },
   society: {
@@ -253,6 +276,12 @@ const cet6Data = {
       { w: "subculture", p: "/ˈsʌbˌkʌltʃə/", m: "n. 亚文化", e: "Hip-hop emerged as a vibrant urban subculture.", ez: "嘻哈作为一种充满活力的城市亚文化出现了。" },
       { w: "urbanization", p: "/ˌɜːbənaɪˈzeɪʃən/", m: "n. 城市化", e: "Rapid urbanization has put pressure on city infrastructure.", ez: "快速城市化给城市基础设施带来了压力。" },
       { w: "welfare", p: "/ˈwelfeə/", m: "n. 福利；幸福", e: "The government provides welfare support for low-income families.", ez: "政府为低收入家庭提供福利支持。" },
+      { w: "civic", p: "/ˈsɪvɪk/", m: "adj. 公民的；市政的", e: "Voting is an important civic duty in a democracy.", ez: "投票是民主制度中一项重要的公民义务。" },
+      { w: "cohesion", p: "/kəʊˈhiːʒən/", m: "n. 凝聚力；团结", e: "Social cohesion is essential for a stable community.", ez: "社会凝聚力对稳定的社区至关重要。" },
+      { w: "inclusive", p: "/ɪnˈkluːsɪv/", m: "adj. 包容的；包含的", e: "We strive to create an inclusive environment for all students.", ez: "我们努力为所有学生创造一个包容的环境。" },
+      { w: "minority", p: "/maɪˈnɒrɪti/", m: "n. 少数群体；少数", e: "The rights of minority groups must be protected by law.", ez: "少数群体的权利必须受到法律保护。" },
+      { w: "rural", p: "/ˈrʊərəl/", m: "adj. 农村的；乡村的", e: "Rural areas often have limited access to healthcare services.", ez: "农村地区通常医疗资源有限。" },
+      { w: "urban", p: "/ˈɜːbən/", m: "adj. 城市的；都市的", e: "Urban planning must consider population growth and sustainability.", ez: "城市规划必须考虑人口增长和可持续性。" }
     ]
   },
   environment: {
@@ -303,6 +332,12 @@ const cet6Data = {
       { w: "toxin", p: "/ˈtɒksɪn/", m: "n. 毒素", e: "The algae bloom released toxins into the water supply.", ez: "藻类爆发向供水系统释放了毒素。" },
       { w: "vegetation", p: "/ˌvedʒɪˈteɪʃən/", m: "n. 植被；植物", e: "Dense vegetation covers the mountain slopes.", ez: "茂密的植被覆盖着山坡。" },
       { w: "wilderness", p: "/ˈwɪldənəs/", m: "n. 荒野；无人区", e: "There are few truly untouched wilderness areas left on Earth.", ez: "地球上真正未被涉足的荒野已经所剩无几。" },
+      { w: "carbon", p: "/ˈkɑːbən/", m: "n. 碳", e: "Reducing carbon emissions is a global priority.", ez: "减少碳排放是全球优先事项。" },
+      { w: "catastrophe", p: "/kəˈtæstrəfi/", m: "n. 灾难；大祸", e: "The oil spill was an environmental catastrophe.", ez: "这次石油泄漏是一场环境灾难。" },
+      { w: "extinction", p: "/ɪkˈstɪŋkʃən/", m: "n. 灭绝；消亡", e: "Many species face extinction due to habitat loss.", ez: "许多物种因栖息地丧失而面临灭绝。" },
+      { w: "mitigate", p: "/ˈmɪtɪɡeɪt/", m: "v. 减轻；缓解；缓和", e: "Planting trees can help mitigate the effects of climate change.", ez: "植树有助于缓解气候变化的影响。" },
+      { w: "resilient", p: "/rɪˈzɪliənt/", m: "adj. 有韧性的；能复原的", e: "Coral reefs are surprisingly resilient when given time to recover.", ez: "只要有时间恢复，珊瑚礁的韧性是惊人的。" },
+      { w: "recycle", p: "/ˌriːˈsaɪkl/", m: "v. 回收利用；再循环", e: "We recycle paper, glass, and plastic at home.", ez: "我们在家回收纸张、玻璃和塑料。" }
     ]
   },
   health: {
@@ -348,6 +383,13 @@ const cet6Data = {
       { w: "vaccine", p: "/ˈvæksiːn/", m: "n. 疫苗", e: "The vaccine provides protection against the virus.", ez: "这种疫苗提供对该病毒的保护。" },
       { w: "viral", p: "/ˈvaɪrəl/", m: "adj. 病毒的；病毒式传播的", e: "Viral infections cannot be treated with antibiotics.", ez: "病毒感染不能用抗生素治疗。" },
       { w: "well-being", p: "/ˌwel ˈbiːɪŋ/", m: "n. 健康；幸福", e: "Mental well-being is just as important as physical health.", ez: "心理健康与身体健康同样重要。" },
+      { w: "addiction", p: "/əˈdɪkʃən/", m: "n. 上瘾；沉溺", e: "Smartphone addiction is a growing concern among teenagers.", ez: "手机成瘾在青少年中日益令人担忧。" },
+      { w: "aerobic", p: "/eəˈrəʊbɪk/", m: "adj. 有氧的", e: "Aerobic exercise strengthens the heart and lungs.", ez: "有氧运动能增强心肺功能。" },
+      { w: "disorder", p: "/dɪsˈɔːdə/", m: "n. 紊乱；障碍；失调", e: "The patient was diagnosed with an anxiety disorder.", ez: "该患者被诊断患有焦虑症。" },
+      { w: "dosage", p: "/ˈdəʊsɪdʒ/", m: "n. 剂量；用量", e: "Always follow the recommended dosage on the label.", ez: "请始终按照标签上的推荐剂量服用。" },
+      { w: "hereditary", p: "/hɪˈredɪtəri/", m: "adj. 遗传的；世袭的", e: "Some forms of cancer have a strong hereditary component.", ez: "某些形式的癌症有很强的遗传因素。" },
+      { w: "rehabilitation", p: "/ˌriːhəˌbɪlɪˈteɪʃən/", m: "n. 康复；恢复", e: "After the accident, he underwent months of physical rehabilitation.", ez: "事故后，他接受了数月的身体康复治疗。" },
+      { w: "wellness", p: "/ˈwelnɪs/", m: "n. 健康；身心康乐", e: "The company promotes employee wellness through various programs.", ez: "公司通过各种项目促进员工的身心健康。" }
     ]
   },
   politics: {
@@ -403,6 +445,14 @@ const cet6Data = {
       { w: "verdict", p: "/ˈvɜːdɪkt/", m: "n. 裁决；判断", e: "The jury returned a verdict of not guilty.", ez: "陪审团作出了无罪裁决。" },
       { w: "violation", p: "/ˌvaɪəˈleɪʃən/", m: "n. 违反；侵犯", e: "The company was fined for safety violations.", ez: "该公司因违反安全规定被罚款。" },
       { w: "warrant", p: "/ˈwɒrənt/", m: "n. 搜查令；授权 v. 使有必要", e: "Police need a warrant to search private property.", ez: "警方搜查私人财产需要搜查令。" },
+      { w: "compliance", p: "/kəmˈplaɪəns/", m: "n. 遵守；合规", e: "The company must be in full compliance with safety regulations.", ez: "该公司必须完全遵守安全法规。" },
+      { w: "implement", p: "/ˈɪmplɪmənt/", m: "v. 实施；执行；落实", e: "The government plans to implement the new policy next year.", ez: "政府计划明年实施新政策。" },
+      { w: "pledge", p: "/pledʒ/", m: "v. 承诺；保证 n. 誓言", e: "The candidate pledged to improve public transportation.", ez: "候选人承诺改善公共交通。" },
+      { w: "scrutiny", p: "/ˈskruːtɪni/", m: "n. 仔细审查；监督", e: "Government spending must be subject to public scrutiny.", ez: "政府支出必须接受公众监督。" },
+      { w: "sovereign", p: "/ˈsɒvrɪn/", m: "adj. 主权的；独立的 n. 君主", e: "Each nation has the sovereign right to govern itself.", ez: "每个国家都有主权权利治理自己。" },
+      { w: "testify", p: "/ˈtestɪfaɪ/", m: "v. 作证；证明", e: "The witness agreed to testify in court.", ez: "证人同意出庭作证。" },
+      { w: "uphold", p: "/ʌpˈhəʊld/", m: "v. 维护；支持；维持", e: "Judges have a duty to uphold the law.", ez: "法官有责任维护法律。" },
+      { w: "violate", p: "/ˈvaɪəleɪt/", m: "v. 违反；侵犯；违背", e: "Companies that violate environmental laws face heavy fines.", ez: "违反环境法的公司将面临巨额罚款。" }
     ]
   },
   daily: {
@@ -453,6 +503,12 @@ const cet6Data = {
       { w: "transit", p: "/ˈtrænzɪt/", m: "n. 运输；公共交通", e: "The city has an efficient public transit system.", ez: "这座城市有高效的公共交通系统。" },
       { w: "utensil", p: "/juːˈtensəl/", m: "n. 器皿；用具", e: "Kitchen utensils should be washed thoroughly after use.", ez: "厨房用具使用后应彻底清洗。" },
       { w: "wholesome", p: "/ˈhəʊlsəm/", m: "adj. 有益健康的", e: "A wholesome diet includes plenty of fruits and vegetables.", ez: "健康的饮食包括大量的水果和蔬菜。" },
+      { w: "adhere", p: "/ədˈhɪə/", m: "v. 遵守；粘附；坚持", e: "Please adhere to the safety guidelines at all times.", ez: "请始终遵守安全指南。" },
+      { w: "itinerary", p: "/aɪˈtɪnərəri/", m: "n. 行程表；旅行计划", e: "The travel agent sent us a detailed itinerary.", ez: "旅行代理给我们发了一份详细的行程表。" },
+      { w: "mundane", p: "/mʌnˈdeɪn/", m: "adj. 平凡的；单调的；世俗的", e: "She found ways to make mundane household chores enjoyable.", ez: "她找到了让单调家务变得愉快的方法。" },
+      { w: "pastime", p: "/ˈpɑːstaɪm/", m: "n. 消遣；娱乐活动", e: "Reading is her favorite pastime on rainy weekends.", ez: "阅读是她在雨天的周末最喜欢的消遣。" },
+      { w: "procrastinate", p: "/prəˈkræstɪneɪt/", m: "v. 拖延；耽搁", e: "Don't procrastinate — start working on your assignment now.", ez: "别拖延了——现在就开始做你的作业。" },
+      { w: "refund", p: "/ˈriːfʌnd/", m: "n. 退款 v. 退款", e: "The store offered a full refund for the defective product.", ez: "商店对有缺陷的产品进行了全额退款。" }
     ]
   },
   emotion: {
@@ -503,6 +559,13 @@ const cet6Data = {
       { w: "timid", p: "/ˈtɪmɪd/", m: "adj. 胆小的；羞怯的", e: "The timid child hid behind her mother's legs.", ez: "那个胆小的孩子躲在她母亲的腿后面。" },
       { w: "traumatic", p: "/trɔːˈmætɪk/", m: "adj. 创伤的；痛苦难忘的", e: "The accident was a traumatic experience for everyone involved.", ez: "这次事故对每个涉及其中的人都是一次痛苦的经历。" },
       { w: "vulnerable", p: "/ˈvʌlnərəbl/", m: "adj. 脆弱的；易受伤的", e: "Sharing your feelings can make you feel vulnerable.", ez: "分享你的感受可能会让你感到脆弱。" },
+      { w: "confide", p: "/kənˈfaɪd/", m: "v. 吐露；倾诉", e: "She confided her fears to her closest friend.", ez: "她向最亲密的朋友倾诉了自己的恐惧。" },
+      { w: "disgust", p: "/dɪsˈɡʌst/", m: "n. 厌恶 v. 使厌恶", e: "He looked at the mess with evident disgust.", ez: "他带着明显的厌恶看着这一团糟。" },
+      { w: "embitter", p: "/ɪmˈbɪtə/", m: "v. 使怨恨；使痛苦", e: "Years of unfair treatment had embittered him.", ez: "多年的不公平对待让他心生怨恨。" },
+      { w: "hostility", p: "/hɒˈstɪlɪti/", m: "n. 敌意；敌对", e: "There was open hostility between the two rival groups.", ez: "两个对立群体之间存在公开的敌意。" },
+      { w: "indifferent", p: "/ɪnˈdɪfərənt/", m: "adj. 漠不关心的；无关紧要的", e: "He seemed completely indifferent to the criticism.", ez: "他似乎对批评完全漠不关心。" },
+      { w: "resentment", p: "/rɪˈzentmənt/", m: "n. 怨恨；不满", e: "The unfair decision caused widespread resentment.", ez: "这个不公正的决定引起了广泛的不满。" },
+      { w: "serene", p: "/sɪˈriːn/", m: "adj. 宁静的；安详的", e: "The lake looked serene in the early morning light.", ez: "湖水在清晨的阳光下看起来宁静安详。" }
     ]
   },
   arts: {
@@ -555,6 +618,27 @@ const cet6Data = {
       { w: "tragedy", p: "/ˈtrædʒɪdi/", m: "n. 悲剧；灾难", e: "Shakespeare's tragedies explore timeless human themes.", ez: "莎士比亚的悲剧探索了永恒的人类主题。" },
       { w: "version", p: "/ˈvɜːʃən/", m: "n. 版本；说法", e: "The director's cut is a longer version of the film.", ez: "导演剪辑版是电影的较长版本。" },
       { w: "vivid", p: "/ˈvɪvɪd/", m: "adj. 生动的；鲜明的", e: "Her vivid descriptions brought the scene to life.", ez: "她生动的描述让场景栩栩如生。" },
+      { w: "innovative", p: "/ˈɪnəveɪtɪv/", m: "adj. 创新的；革新的", e: "The artist is known for her innovative use of recycled materials.", ez: "这位艺术家以创新性地使用回收材料而闻名。" },
+      { w: "portray", p: "/pɔːˈtreɪ/", m: "v. 描绘；扮演；表现", e: "The film portrays the struggles of immigrant families.", ez: "这部电影描绘了移民家庭的艰难处境。" },
+      { w: "repertoire", p: "/ˈrepətwɑː/", m: "n. 全部剧目；常备曲目；（技能）库", e: "The pianist has an extensive repertoire of classical pieces.", ez: "这位钢琴家拥有丰富的古典曲目储备。" },
+      { w: "transcend", p: "/trænˈsend/", m: "v. 超越；胜过", e: "Great art can transcend cultural and language barriers.", ez: "伟大的艺术可以超越文化和语言障碍。" }
+    ]
+  },
+  science: {
+    name: "自然与科学",
+    icon: "🔬",
+    words: [
+      { w: "atom", p: "/ˈætəm/", m: "n. 原子", e: "Everything in the universe is made up of atoms.", ez: "宇宙万物都是由原子组成的。" },
+      { w: "bacterium", p: "/bækˈtɪəriəm/", m: "n. 细菌", e: "Not all bacteria are harmful — some are essential for health.", ez: "并非所有细菌都有害——有些对健康至关重要。" },
+      { w: "catalyst", p: "/ˈkætəlɪst/", m: "n. 催化剂；促进因素", e: "The discovery acted as a catalyst for further research.", ez: "这一发现成为了进一步研究的催化剂。" },
+      { w: "compound", p: "/ˈkɒmpaʊnd/", m: "n. 化合物；复合物 adj. 复合的", e: "Water is a chemical compound of hydrogen and oxygen.", ez: "水是氢和氧的化合物。" },
+      { w: "evolution", p: "/ˌiːvəˈluːʃən/", m: "n. 进化；演变；发展", e: "The theory of evolution explains the diversity of life on Earth.", ez: "进化论解释了地球上生命的多样性。" },
+      { w: "gravity", p: "/ˈɡrævɪti/", m: "n. 重力；引力；严重性", e: "The gravity of Mars is about 38% of Earth's.", ez: "火星的重力大约是地球的38%。" },
+      { w: "hypothesis", p: "/haɪˈpɒθəsɪs/", m: "n. 假设；假说", e: "The scientist proposed a bold new hypothesis to explain the data.", ez: "科学家提出了一个大胆的新假设来解释这些数据。" },
+      { w: "molecule", p: "/ˈmɒlɪkjuːl/", m: "n. 分子", e: "A water molecule consists of two hydrogen atoms and one oxygen atom.", ez: "一个水分子由两个氢原子和一个氧原子组成。" },
+      { w: "specimen", p: "/ˈspesɪmɪn/", m: "n. 标本；样品；样本", e: "The laboratory received a rare plant specimen from the Amazon.", ez: "实验室收到了一份来自亚马逊的稀有植物标本。" },
+      { w: "tissue", p: "/ˈtɪʃuː/", m: "n. （生物）组织；纸巾", e: "The doctor took a small sample of tissue for analysis.", ez: "医生取了一小块组织样本进行分析。" },
+      { w: "voltage", p: "/ˈvəʊltɪdʒ/", m: "n. 电压", e: "Check the voltage before plugging in the device.", ez: "在插电之前请检查电压。" }
     ]
   }
 };

@@ -2,6 +2,17 @@
 const $ = (s, p) => (p || document).querySelector(s);
 const $$ = (s, p) => (p || document).querySelectorAll(s);
 
+/* ========== 词库注册 ========== */
+const PACKS = {};
+function registerPack(key, name, icon, data) {
+  PACKS[key] = { name, icon, data };
+}
+// 各数据文件加载后通过 registerPack 注册
+// 数据文件在 <script> 中先于 script.js 加载
+if (typeof cet6Data !== 'undefined') registerPack('cet6', '六级词汇 CET-6', '📘', cet6Data);
+if (typeof ieltsData !== 'undefined') registerPack('ielts', '雅思词汇 IELTS', '📙', ieltsData);
+if (typeof primaryData !== 'undefined') registerPack('primary', '小学英语 PEP', '📗', primaryData);
+
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -34,7 +45,8 @@ const state = {
 
 /* ========== 数据访问 ========== */
 function getData() {
-  return state.currentPack === 'cet6' ? cet6Data : ieltsData;
+  const pack = PACKS[state.currentPack];
+  return pack ? pack.data : {};
 }
 
 function getCatInfo(catKey) {
@@ -96,7 +108,7 @@ function loadProgress() {
       });
     }
     const p = localStorage.getItem('englearn_pack');
-    if (p && (p === 'cet6' || p === 'ielts')) state.currentPack = p;
+    if (p && PACKS[p]) state.currentPack = p;
     const c = localStorage.getItem('englearn_cat');
     if (c) state.currentCat = c;
   } catch (e) { /* ignore */ }
@@ -182,26 +194,140 @@ function updateLevelBtns() {
   });
 }
 
+/* ========== 词库按钮渲染 ========== */
+function renderPackButtons() {
+  const packs = Object.keys(PACKS);
+  const btnHTML = packs.map(k => {
+    const pack = PACKS[k];
+    const active = state.currentPack === k ? ' active' : '';
+    return `<button class="pack-btn${active}" data-pack="${k}">
+      <span class="pack-icon">${pack.icon}</span> ${pack.name}
+    </button>`;
+  }).join('');
+
+  const desktopList = $('#pack-list-desktop');
+  if (desktopList) desktopList.innerHTML = btnHTML;
+
+  const mobileList = $('#pack-list-mobile');
+  if (mobileList) {
+    mobileList.innerHTML = packs.map(k => {
+      const pack = PACKS[k];
+      const active = state.currentPack === k ? ' active' : '';
+      return `<button class="pack-btn${active}" data-pack="${k}">
+        <span class="pack-icon">${pack.icon}</span><span>${pack.name.replace(/ .*$/, '')}</span>
+      </button>`;
+    }).join('');
+  }
+
+  // 重新绑定事件
+  $$('.pack-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchPack(btn.dataset.pack));
+  });
+}
+
 /* ========== 场景目录渲染 ========== */
+function isPrimaryPack() {
+  const cats = getAllCategories();
+  if (cats.length < 8) return false;
+  return cats.filter(c => /^g[3-6][ub]\d+$/.test(c.key)).length > cats.length * 0.7;
+}
+
+const GRADE_NAMES = { g3: '三年级', g4: '四年级', g5: '五年级', g6: '六年级' };
+const GRADE_ICONS = { g3: '📗', g4: '📙', g5: '📕', g6: '📔' };
+
+function groupByGrade(cats) {
+  const groups = {};
+  cats.forEach(c => {
+    const m = c.key.match(/^(g[3-6])/);
+    if (m) {
+      const g = m[1];
+      if (!groups[g]) groups[g] = { cats: [], icon: c.icon };
+      groups[g].cats.push(c);
+    }
+  });
+  return groups;
+}
+
 function renderCategoryDirectory() {
   const cats = getAllCategories();
   const totalAll = cats.reduce((s, c) => s + c.count, 0);
   $('#cat-count-all').textContent = totalAll;
 
   const sidebarList = $('#cat-list');
-  sidebarList.innerHTML = cats.map(c => `
-    <button class="cat-btn-sidebar" data-cat="${c.key}">
-      <span class="cat-icon">${c.icon}</span> ${c.name}
-      <span class="cat-count">${c.count}</span>
-    </button>
-  `).join('');
+
+  if (isPrimaryPack()) {
+    const groups = groupByGrade(cats);
+    let html = '';
+    for (const [g, group] of Object.entries(groups)) {
+      const totalInGrade = group.cats.reduce((s, c) => s + c.count, 0);
+      html += `<div class="grade-group">
+        <button class="grade-header" data-grade="${g}">
+          <span class="grade-arrow">▸</span>
+          <span class="cat-icon">${group.icon}</span> ${GRADE_NAMES[g] || g}
+          <span class="cat-count">${totalInGrade}</span>
+        </button>
+        <div class="grade-units hidden">`;
+      group.cats.forEach(c => {
+        html += `<button class="cat-btn-sidebar" data-cat="${c.key}">
+          <span class="cat-icon">${c.icon}</span> ${c.name.replace(/^[三四五六上下]+·/, '')}
+          <span class="cat-count">${c.count}</span>
+        </button>`;
+      });
+      html += `</div></div>`;
+    }
+    sidebarList.innerHTML = html;
+  } else {
+    sidebarList.innerHTML = cats.map(c => `
+      <button class="cat-btn-sidebar" data-cat="${c.key}">
+        <span class="cat-icon">${c.icon}</span> ${c.name}
+        <span class="cat-count">${c.count}</span>
+      </button>
+    `).join('');
+  }
 
   const mobileScroll = $('#cat-scroll');
-  let html = `<button class="cat-chip active" data-cat="all">📋 全部</button>`;
-  html += cats.map(c => `<button class="cat-chip" data-cat="${c.key}">${c.icon} ${c.name}</button>`).join('');
-  mobileScroll.innerHTML = html;
+  if (isPrimaryPack()) {
+    const groups = groupByGrade(cats);
+    let html = `<button class="cat-chip active" data-cat="all">📋 全部</button>`;
+    for (const [g, group] of Object.entries(groups)) {
+      html += `<span class="cat-chip-divider">${GRADE_ICONS[g] || group.icon} ${GRADE_NAMES[g]}</span>`;
+      group.cats.forEach(c => {
+        html += `<button class="cat-chip" data-cat="${c.key}">${c.name.replace(/^[三四五六上下]+·/, '')}</button>`;
+      });
+    }
+    mobileScroll.innerHTML = html;
+  } else {
+    let html = `<button class="cat-chip active" data-cat="all">📋 全部</button>`;
+    html += cats.map(c => `<button class="cat-chip" data-cat="${c.key}">${c.icon} ${c.name}</button>`).join('');
+    mobileScroll.innerHTML = html;
+  }
 
   updateCategoryActive();
+  autoExpandActiveGrade();
+}
+
+function toggleGrade(gradeHeader) {
+  const units = gradeHeader.nextElementSibling;
+  if (!units || !units.classList.contains('grade-units')) return;
+  const arrow = gradeHeader.querySelector('.grade-arrow');
+  const isHidden = units.classList.contains('hidden');
+  units.classList.toggle('hidden', !isHidden);
+  if (arrow) arrow.textContent = isHidden ? '▾' : '▸';
+}
+
+function autoExpandActiveGrade() {
+  const activeBtn = $('#cat-list .cat-btn-sidebar.active');
+  if (activeBtn) {
+    const units = activeBtn.closest('.grade-units');
+    if (units) {
+      units.classList.remove('hidden');
+      const header = units.previousElementSibling;
+      if (header) {
+        const arrow = header.querySelector('.grade-arrow');
+        if (arrow) arrow.textContent = '▾';
+      }
+    }
+  }
 }
 
 function updateCategoryActive() {
@@ -223,6 +349,7 @@ function switchCategory(cat) {
   state.currentCat = cat;
   saveProgress();
   updateCategoryActive();
+  autoExpandActiveGrade();
   refreshPool();
   updateProgress();
   resetCurrentMode();
@@ -234,13 +361,13 @@ function switchPack(pack) {
   state.currentPack = pack;
   state.currentCat = 'all';
   saveProgress();
+  renderPackButtons();
   renderCategoryDirectory();
   updateCategoryActive();
   refreshPool();
   updateProgress();
   resetCurrentMode();
   closeSearch();
-  $$('.pack-btn').forEach(b => b.classList.toggle('active', b.dataset.pack === pack));
 }
 
 function resetCurrentMode() { switchMode(state.currentMode); }
@@ -856,11 +983,11 @@ function closeSidebar() {
 
 /* ========== 事件绑定 ========== */
 function bindEvents() {
-  $$('.pack-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchPack(btn.dataset.pack));
-  });
-
   $('#cat-list').addEventListener('click', (e) => {
+    // 年级折叠按钮
+    const gradeHeader = e.target.closest('.grade-header');
+    if (gradeHeader) { toggleGrade(gradeHeader); return; }
+    // 单元按钮
     const btn = e.target.closest('.cat-btn-sidebar');
     if (btn) switchCategory(btn.dataset.cat);
   });
@@ -1005,9 +1132,13 @@ function _init() {
   setAccent(getAccent());
 
   // 验证数据文件是否加载成功
-  if (typeof cet6Data === 'undefined' || typeof ieltsData === 'undefined') {
+  const availablePacks = Object.keys(PACKS);
+  if (availablePacks.length === 0) {
     console.warn('词汇数据文件未加载，稍后重试');
     return;
+  }
+  if (!PACKS[state.currentPack]) {
+    state.currentPack = availablePacks[0];
   }
 
   const data = getData();
@@ -1015,9 +1146,9 @@ function _init() {
     state.currentCat = 'all';
   }
 
+  renderPackButtons();
   renderCategoryDirectory();
   updateCategoryActive();
-  $$('.pack-btn').forEach(b => b.classList.toggle('active', b.dataset.pack === state.currentPack));
 
   refreshPool();
   updateProgress();
